@@ -18,9 +18,9 @@ Layer 1 of the CPS architecture requires observing the environment and interpret
 
 ## Decision
 We will implement a unified `perception_node.py` combining three perception channels:
-1. **360° 2D LiDAR (`RobotisLds01`)**: Partitioned into directional clearance sectors (`front`, `front_left`, `front_right`, `rear`) to support both forward obstacle avoidance and safe reversing.
+1. **360° 2D LiDAR (`RobotisLds01`) x2 (front + rear units)**: Each unit masks its self-occluded angles (arm, bin, chassis) and is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`, `rear`) to support both forward obstacle avoidance and safe reversing.
 2. **Webots Camera with Built-in `Recognition`**: Uses Webots' native object recognition node (`recognitionColors`) to extract 3D relative positions of trash items in the camera frame with near-zero CPU overhead, converting them into target distance and bearing (`/rover/trash_target`).
-3. **IMU + 6-Wheel Encoder Complementary Filter**: Fuses high-frequency gyroscope yaw rate and wheel odometry (building on Assignment 2) to publish slip-compensated pose (`/rover/odom_filtered`), while accelerometer/inertial readings provide continuous roll and pitch angles (`/rover/tilt_state`).
+3. **IMU + 6-Wheel Encoder Complementary Filter**: Fuses high-frequency gyroscope yaw rate and wheel odometry (building on Assignment 2) to publish slip-compensated pose (`/rover/odom_filtered`), while the Webots `InertialUnit` provides roll and pitch angles directly (the filter is only needed for yaw) (`/rover/tilt_state`).
    - *Note*: Long-term outdoor **GPS localization** is documented in the system architecture as a future extension but scoped out of the local PoC arena.
 
 ## Consequences

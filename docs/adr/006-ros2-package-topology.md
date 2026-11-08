@@ -15,12 +15,15 @@ The ROS 2 codebase must be easy to build, debug, and launch inside the course's 
 
 ## Decision
 We will organize the implementation as a **Single ROS 2 Python Package (`roadside_rover_pkg`)** with modular node scripts launched via a single `rover.launch.py`:
-- `rover_driver.py`: `webots_ros2_driver` plugin bridging the Koala 6WD base, 5-DOF arm, gripper, LiDAR, Camera `Recognition`, and IMU.
+- `rover_driver.py`: `webots_ros2_driver` plugin bridging the Koala 6WD base, 5-DOF arm, gripper, two LiDARs, Camera `Recognition`, and IMU/InertialUnit.
 - `perception_node.py`: Layer 1 — Complementary Filter (IMU + 6-wheel encoders), LiDAR sector processor, and trash target tracker.
-- `behavior_tree_node.py`: Layer 2 & Base Control — `py_trees` reactive/deliberative tree + Terrain-Adaptive Base PID controller.
+- `behavior_tree_node.py`: Layer 2 - `py_trees` reactive/deliberative tree; selects the base mode (`/rover/base_mode`) and triggers/aborts the arm FSM.
+- `base_controller_node.py`: Layer 3 Base Control - Terrain-Adaptive Base PID; the **sole `/cmd_vel` publisher** (acts as the velocity arbiter based on the BT-selected mode).
 - `arm_fsm_node.py`: Layer 3 Manipulation — 5-state Pick-and-Place Sub-FSM controlling `arm1`–`arm5` and gripper fingers.
 
 Telemetry will be logged directly to console/log output during execution, with an optional standalone plotter script only if visual PID tuning is needed later.
+
+Custom driver code is required (not provided by `webots_ros2_driver`): 6-wheel skid-steer drive and wheel odometry, conversion of camera `Recognition` objects to `/camera/recognized_trash`, and `/arm/joint_N/cmd` + `/arm/gripper/cmd` handling.
 
 ## Consequences
 - **Pros**:

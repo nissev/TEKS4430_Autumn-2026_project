@@ -19,8 +19,8 @@ The **Roadside Rough-Terrain Trash Collection Rover** is a 3-layer Autonomous Cy
 ```mermaid
 flowchart TD
     subgraph Webots["Webots R2025a Simulator (Lightweight Roadside Arena)"]
-        Sensors["Sensors: 6x Wheel Encoders, IMU (Gyro/Accel),\n360° 2D LiDAR (RobotisLds01), Camera (Recognition)"]
-        Actuators["Actuators: 6x Wheel Motors, 5-DOF Arm (arm1..arm5),\nParallel Gripper (finger::left/right), Grasp-Assist Supervisor"]
+        Sensors["Sensors: 6x Wheel Encoders, IMU (Gyro/Accel),\n360° 2D LiDAR (RobotisLds01) x2 front/rear, Camera (Recognition)"]
+        Actuators["Actuators: 6x Wheel Motors, 5-DOF Arm (arm1..arm5),\nParallel Gripper (finger::left/right)"]
     end
 
     subgraph ROS2["ROS 2 Jazzy (roadside_rover_pkg)"]
@@ -38,7 +38,7 @@ flowchart TD
         end
 
         subgraph Layer3["Layer 3: Act & Control"]
-            BasePID["Terrain-Adaptive Base PID\n(Heading & Standoff Distance + Tilt Speed Scaling)"]
+            BasePID["Terrain-Adaptive Base PID (base_controller_node.py)\n(Heading & Standoff Distance + Tilt Speed Scaling)"]
             ArmFSM["5-State Arm Pick-and-Place Sub-FSM (arm_fsm_node.py)\n(HOME -> PRE_GRASP -> GRASP -> LIFT -> DROP_IN_BIN)"]
         end
     end
@@ -70,7 +70,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- |
 | **1. Sensing & Perception** | `perception_node.py` | • **Complementary Filter**: Fuses 6-wheel encoders with IMU gyro/accelerometer to correct wheel-slip yaw drift and compute roll/pitch tilt angles.<br>• **360° LiDAR Processing**: Computes minimum safe distances across front, side, and rear sectors.<br>• **Trash Recognition**: Extracts nearest collectible trash item distance and bearing from Webots Camera recognition objects. | Assignment 2 (Sensor Fusion & IMU/Odom Drift) |
 | **2. Reasoning, Planning & Decision-Making** | `behavior_tree_node.py` | • **Reactive Layer (`py_trees`)**: Continuously checks IMU tilt thresholds (rollover prevention) and 360° LiDAR proximity (collision avoidance including reversing).<br>• **Deliberative Layer (`py_trees`)**: Coordinates patrolling, approaching detected trash, triggering the arm Sub-FSM, and (stretch goal) returning to the depot when full. | Assignment 3 (Hybrid Reactive–Deliberative Behavior Trees) |
-| **3. Act & Control** | `behavior_tree_node.py` (Base PID)<br>`arm_fsm_node.py` (Arm Sub-FSM) | • **Terrain-Adaptive Base PID**: Closed-loop angular & linear velocity control to park at the exact arm reach standoff ($d_{\text{pick}}$), scaling max velocity inversely with IMU tilt.<br>• **Arm Pick-and-Place Sub-FSM**: 5-state sequence driving `arm1`–`arm5` and gripper fingers to grasp trash in front and deposit it into the rear onboard bin. | Assignment 4 (5-DOF Arm Kinematics, PID & Pick-and-Place FSM) |
+| **3. Act & Control** | `base_controller_node.py` (Base PID, sole `/cmd_vel` publisher)<br>`arm_fsm_node.py` (Arm Sub-FSM) | • **Terrain-Adaptive Base PID**: Closed-loop angular & linear velocity control to park at the exact arm reach standoff ($d_{\text{pick}}$), scaling max velocity inversely with IMU tilt.<br>• **Arm Pick-and-Place Sub-FSM**: 5-state sequence driving `arm1`–`arm5` and gripper fingers to grasp trash in front and deposit it into the rear onboard bin. | Assignment 4 (5-DOF Arm Kinematics, PID & Pick-and-Place FSM) |
 
 ---
 
@@ -104,22 +104,27 @@ flowchart TD
 
 ---
 
+> **Note**: Layer 2 planning is intentionally simple for this PoC (reactive safety + patrol/approach/pick). A real system would add higher-level mission planning (coverage/route planning, task allocation, map-based depot navigation).
+
 ## 4. ROS 2 Topic Interface Summary
 
 | Topic | Message Type | Publisher | Subscriber | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `/scan` | `sensor_msgs/LaserScan` | `rover_driver` | `perception_node` | 360° 2D LiDAR scan (`RobotisLds01`) |
+| `/scan_front`, `/scan_rear` | `sensor_msgs/LaserScan` | `rover_driver` | `perception_node` | 360° 2D LiDAR scans (front and rear units, self-occluded sectors masked) |
 | `/imu/data_raw` | `sensor_msgs/Imu` | `rover_driver` | `perception_node` | Raw IMU gyroscope & accelerometer data |
 | `/wheel_odom_raw` | `nav_msgs/Odometry` | `rover_driver` | `perception_node` | Raw 6-wheel encoder odometry |
 | `/camera/recognized_trash` | `geometry_msgs/PointStamped` | `rover_driver` | `perception_node` | Closest trash position in robot frame (`x, y, z`) |
 | `/rover/odom_filtered` | `nav_msgs/Odometry` | `perception_node` | `behavior_tree_node` | Slip-compensated Complementary Filter pose |
 | `/rover/tilt_state` | `geometry_msgs/Vector3` | `perception_node` | `behavior_tree_node` | `x`: roll (rad), `y`: pitch (rad), `z`: tilt speed scale $[0.2, 1.0]$ |
 | `/rover/trash_target` | `geometry_msgs/Point` | `perception_node` | `behavior_tree_node` | `x`: distance (m), `y`: bearing (rad), `z`: valid flag ($1.0$ or $0.0$) |
-| `/cmd_vel` | `geometry_msgs/Twist` | `behavior_tree_node` | `rover_driver` | Differential-drive linear/angular velocity command |
+| `/rover/obstacle_sectors` | `std_msgs/Float32MultiArray` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Min clearance (m): front, front-left, front-right, rear |
+| `/rover/base_mode` | `std_msgs/String` | `behavior_tree_node` | `base_controller_node` | Base mode selected by the BT (`PATROL`, `APPROACH`, `AVOID`, `RECOVER`, `STOP`) |
+| `/cmd_vel` | `geometry_msgs/Twist` | `base_controller_node` | `rover_driver` | Differential-drive linear/angular velocity command |
 | `/arm/joint_1..5/cmd` | `std_msgs/Float64` | `arm_fsm_node` | `rover_driver` | Target joint angles for the 5-DOF arm |
 | `/arm/gripper/cmd` | `std_msgs/Float64` | `arm_fsm_node` | `rover_driver` | Gripper finger opening width ($0.0\text{ m}$ to $0.0245\text{ m}$) |
 | `/arm/pick_trigger` | `std_msgs/Bool` | `behavior_tree_node` | `arm_fsm_node` | Triggers the 5-state pick-and-place cycle |
-| `/arm/pick_status` | `std_msgs/String` | `arm_fsm_node` | `behavior_tree_node` | Current FSM state (`IDLE`, `BUSY`, `SUCCESS`, `FAILED`) |
+| `/arm/abort` | `std_msgs/Bool` | `behavior_tree_node` | `arm_fsm_node` | Abort current pick and stow arm to `HOME` (sent when the BT preempts `ExecuteArmSubFSM`) |
+| `/arm/pick_status` | `std_msgs/String` | `arm_fsm_node` | `behavior_tree_node` | Current FSM state (`IDLE`, `BUSY`, `SUCCESS`, `FAILED`, `ABORTED`) |
 
 ---
 

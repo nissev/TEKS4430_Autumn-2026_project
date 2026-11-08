@@ -21,13 +21,15 @@ We will implement a **Hybrid `py_trees` Behavior Tree + 5-State Arm Pick-and-Pla
 2. **Dedicated Arm Pick-and-Place Sub-FSM (`arm_fsm_node.py`)**:
    - Triggered by the Behavior Tree once the rover is parked at the pick standoff distance in front of a trash item.
    - Steps deterministically through 5 states (`HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`) and reports `SUCCESS`/`FAILED` back to the Behavior Tree.
+   - Gripper open/close is handled inside the states: open in `PRE_GRASP`, close in `GRASP`, release and return to `HOME` in `DROP_IN_BIN`.
+   - **Abort/stow protocol**: the Reactive Safety branch outranks the mission branch, so when it preempts `ExecuteArmSubFSM` the BT publishes `/arm/abort`; the FSM stows the arm to `HOME` and reports `ABORTED`. The FSM also enforces a pick timeout (reports `FAILED`).
 
 ## Consequences
 - **Pros**:
   - Combines the modularity and preemption of `py_trees` (Assignment 3) with the clean sequential joint trajectory control of an FSM (Assignment 4 Task 3).
   - Keeps `behavior_tree_node.py` clean and decoupled from low-level joint timing.
 - **Cons**:
-  - Requires a lightweight handoff protocol (`/arm/pick_trigger` and `/arm/pick_status` topics) between the BT node and the Arm FSM node.
+  - Requires a lightweight handoff protocol (`/arm/pick_trigger`, `/arm/abort` and `/arm/pick_status` topics) between the BT node and the Arm FSM node.
 
 ## Sources
 - [py_trees Documentation](https://py-trees.readthedocs.io/en/devel/)
