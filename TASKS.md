@@ -31,7 +31,7 @@ last_updated: November 8, 2026 at 11:37
 
 ### Milestone 1 (M1): Architecture, Docker Setup & Lightweight Webots World
 - [x] **M1.1**: Document system architecture ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) and Architecture Decision Records (`docs/adr/001`–`006`).
-- [ ] **M1.2**: Scaffold Docker & ROS 2 Jazzy workspace (`docker-compose.yml`, `Dockerfile`, `.env.example`, and `src/roadside_rover_pkg`).
+- [x] **M1.2**: Scaffold Docker & ROS 2 Jazzy workspace (`docker-compose.yml`, `Dockerfile`, `.env.example`, and `src/roadside_rover_pkg`).
 - [ ] **M1.3**: Build lightweight low-poly Webots world (`src/worlds/roadside_arena.wbt`) using primitive shapes (`Plane`, tilted `Box` ditches/ramps, low-poly `Cylinder`/`Box` rocks, and `Recognition`-tagged trash blocks) for high laptop FPS.
 - [ ] **M1.4**: Assemble the custom **K-Team `Koala` 6WD Rover** in `roadside_arena.wbt` with `extensionSlot` devices:
   - Extracted `Youbot` 5-DOF Arm (`arm1`–`arm5`, `finger::left`, `finger::right`) mounted at the front.
@@ -59,7 +59,7 @@ last_updated: November 8, 2026 at 11:37
 ### Milestone 4 (M4): Layer 2 — Hybrid Behavior Tree (`py_trees`) Integration
 - [ ] **M4.1**: Implement reactive safety leaves in `behavior_tree_node.py`:
   - `IsTiltCritical` + `RecoverFromTilt` (back off / throttle speed when pitch/roll exceeds threshold).
-\1
+  - `IsObstacleTooClose` + `AvoidObstacle` (360° LiDAR steering / reversing).
   - When the reactive branch preempts `ExecuteArmSubFSM`, publish `/arm/abort`.
 - [ ] **M4.2**: Implement deliberative mission leaves in `behavior_tree_node.py`:
   - `DetectAndApproachTrash` (locks onto `/rover/trash_target` and drives via Base PID to pick standoff).
@@ -70,7 +70,7 @@ last_updated: November 8, 2026 at 11:37
 ### Milestone 5 (M5): Verification, Presentation & Final Submission
 - [ ] **M5.1**: End-to-end mission verification in Webots + telemetry log capture (optional Matplotlib PID plot if needed for tuning).
 - [ ] **M5.2**: Decide final presentation slide format (see Open Decisions below) and create presentation slides (note that a real system would have more high-level mission planning) covering architecture, ADRs, verification, and Part B self-reflection.
-\1
+- [ ] **M5.3**: Record video presentation demonstrating the system and explaining Part A & Part B.
 - [ ] **M5.4**: Part B deliverables: AI-tool usage reporting and self-reflection (handled by the author) included in slides/video.
 
 ---

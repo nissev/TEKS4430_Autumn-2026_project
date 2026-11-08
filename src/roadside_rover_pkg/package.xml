@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>roadside_rover_pkg</name>
+  <version>0.0.1</version>
+  <description>Autonomous roadside trash collection rover (Koala 6WD + 5-DOF arm) for Webots</description>
+  <maintainer email="user@example.com">NisseV</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>webots_ros2_driver</depend>
+  <depend>py_trees</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
