@@ -137,6 +137,25 @@ All key architectural choices are documented in `docs/adr/`:
 - [ADR-004: Hybrid Behavior Tree & Arm Sub-FSM Architecture](adr/004-hybrid-reasoning-architecture.md)
 - [ADR-005: Terrain-Adaptive Control & Grasping Reliability](adr/005-actuation-and-control.md)
 - [ADR-006: ROS 2 Package & Node Topology](adr/006-ros2-package-topology.md)
+- [ADR-007: Road/Hazard-Zone Exclusion Not Implemented (Known Safety Gap)](adr/007-road-exclusion-not-implemented.md)
+
+---
+
+## 6. Known Limitations & Future Safety Architecture
+
+- **No road/hazard-zone exclusion (critical safety gap).** The rover has no semantics to distinguish the road from the verge, so nothing stops it from driving onto the carriageway. The PoC's world walls are a test-bench boundary only. Decision and future design: [ADR-007](adr/007-road-exclusion-not-implemented.md).
+- **Future layer placement (not implemented):**
+
+```mermaid
+flowchart LR
+    Sem["hazard_zone_node (geofence / road semantics)"]:::future -.->|"/rover/hazard_zone"| BT["behavior_tree_node (IsNearRoad + RetreatFromRoad, top priority)"]:::future
+    Sem -.-> Mon["Independent safety monitor (stop base)"]:::future
+    BT -.-> Base["base_controller_node (velocity clamp at boundary)"]
+    Mon -.-> Base
+    classDef future stroke-dasharray: 5 5
+```
+
+- **Simulation fidelity:** the road is visual-only, and the terrain is a coarse `ElevationGrid` ([ADR-002](adr/002-lightweight-simulation-world.md)).
 
 ---
 

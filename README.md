@@ -35,6 +35,7 @@ The system implements the three core CPS architectural layers:
   - [ADR-004: Hybrid Behavior Tree & Arm Sub-FSM Architecture](docs/adr/004-hybrid-reasoning-architecture.md)
   - [ADR-005: Terrain-Adaptive Control & Grasping Reliability](docs/adr/005-actuation-and-control.md)
   - [ADR-006: ROS 2 Package & Node Topology](docs/adr/006-ros2-package-topology.md)
+  - [ADR-007: Road/Hazard-Zone Exclusion Not Implemented (Known Safety Gap)](docs/adr/007-road-exclusion-not-implemented.md)
 
 ---
 
