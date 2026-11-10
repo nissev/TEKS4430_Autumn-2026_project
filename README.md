@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:55
-last_updated: November 8, 2026 at 11:55
+last_updated: November 10, 2026 at 18:58
 ---
 
 # Autonomous Roadside Rough-Terrain Trash Collection Rover
@@ -14,10 +14,10 @@ last_updated: November 8, 2026 at 11:55
 
 ## 1. Project Concept
 
-An autonomous 6-wheel-drive (6WD) outdoor rover (**K-Team `Koala`**) equipped with a **5-DOF manipulator arm** (`Youbot` arm extraction) and an **onboard rear collection bin**, designed to locate, pick up, and store roadside litter across uneven, obstacle-strewn terrain.
+An autonomous 4-wheel-drive (4WD) all-terrain outdoor rover (**Adept `Pioneer 3-AT`**, `name "pioneer_rover"`) equipped with a **5-DOF manipulator arm** (`Youbot` arm extraction mounted on a low front-bumper bracket) and an **onboard front-top deck collection bin**, designed to locate, pick up, and store roadside litter across uneven, obstacle-strewn terrain.
 
 The system implements the three core CPS architectural layers:
-1. **Sensing & Perception (`perception_node.py`)**: Fuses 6-wheel encoders with IMU gyro/accelerometer data via a **Complementary Filter** to compensate for wheel slip while reading roll/pitch tilt directly from the `InertialUnit`, while processing **360° 2D LiDAR** (`RobotisLds01`, front + rear units) clearance sectors and **Webots Camera `Recognition`** 3D trash detections.
+1. **Sensing & Perception (`perception_node.py`)**: Fuses 4-wheel encoders with IMU gyro/accelerometer data via a **Complementary Filter** to compensate for wheel slip while reading roll/pitch tilt directly from the `InertialUnit`, while processing **360° 2D LiDAR** (`RobotisLds01`, front + rear units) clearance sectors and **Webots Camera `Recognition`** 3D trash detections.
 2. **Reasoning, Planning & Decision-Making (`behavior_tree_node.py`)**: A hybrid reactive–deliberative **Behavior Tree (`py_trees`)** that prioritizes IMU rollover/tilt recovery and 360° obstacle avoidance (forward & reverse) over deliberative patrolling, approaching trash, and triggering the arm pick-and-place sequence.
 3. **Act & Control (`base_controller_node.py` & `arm_fsm_node.py`)**: A **Terrain-Adaptive Base PID Controller** that aligns and parks the rover at the grasp standoff distance while dynamically scaling speed inversely with terrain tilt, paired with a **5-State Arm Pick-and-Place Sub-FSM** (`HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`).
 

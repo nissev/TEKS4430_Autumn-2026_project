@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 8, 2026 at 11:37
+last_updated: November 10, 2026 at 18:58
 ---
 
 # System Architecture: Roadside Rough-Terrain Trash Collection Rover
@@ -14,20 +14,20 @@ last_updated: November 8, 2026 at 11:37
 
 ## 1. Architectural Overview
 
-The **Roadside Rough-Terrain Trash Collection Rover** is a 3-layer Autonomous Cyber-Physical System (CPS) built around a **K-Team `Koala` 6WD rover** retrofitted with a **5-DOF manipulator arm** (`Youbot` arm extraction), an **onboard rear collection bin**, a **360° 2D LiDAR**, a **Camera with `Recognition`**, and an **IMU + 6-wheel encoders**.
+The **Roadside Rough-Terrain Trash Collection Rover** is a 3-layer Autonomous Cyber-Physical System (CPS) built around an **Adept `Pioneer 3-AT` 4WD all-terrain rover** (`name "pioneer_rover"`) retrofitted with a **5-DOF manipulator arm** (`Youbot` arm extraction on a low front-bumper bracket), an **onboard front-top deck collection bin**, two **360° 2D LiDARs** (`RobotisLds01` front & rear), a **Camera with `Recognition`**, and an **IMU + 4-wheel encoders**.
 
 ```mermaid
 flowchart TD
     subgraph Webots["Webots R2025a Simulator (Lightweight Roadside Arena)"]
-        Sensors["Sensors: 6x Wheel Encoders, IMU (Gyro/Accel),\n360° 2D LiDAR (RobotisLds01) x2 front/rear, Camera (Recognition)"]
-        Actuators["Actuators: 6x Wheel Motors, 5-DOF Arm (arm1..arm5),\nParallel Gripper (finger::left/right)"]
+        Sensors["Sensors: 4x Wheel Encoders, IMU (Gyro/Accel/InertialUnit),\n360° 2D LiDAR (RobotisLds01) x2 front/rear, Camera (Recognition)"]
+        Actuators["Actuators: 4x Wheel Motors, 5-DOF Arm (arm1..arm5),\nParallel Gripper (finger::left/right)"]
     end
 
     subgraph ROS2["ROS 2 Jazzy (roadside_rover_pkg)"]
         Driver["rover_driver.py\n(Webots ROS 2 Bridge)"]
 
         subgraph Layer1["Layer 1: Sensing & Perception (perception_node.py)"]
-            CompFilter["Complementary Filter\n(6WD Odometry + IMU Yaw & Tilt)"]
+            CompFilter["Complementary Filter\n(4WD Odometry + IMU Yaw & Tilt)"]
             LidarProc["360° LiDAR Sector Analyzer\n(Front / Sides / Rear Clearance)"]
             CamRec["Trash Target Tracker\n(Camera Recognition 3D Pose -> Bearing/Range)"]
             GPSFuture["[Scoped Out / Future]\nGPS Long-Term Waypoint Localization"]
@@ -68,9 +68,9 @@ flowchart TD
 
 | CPS Layer | ROS 2 Node(s) | Responsibilities | Course Baseline Reference |
 | :--- | :--- | :--- | :--- |
-| **1. Sensing & Perception** | `perception_node.py` | • **Complementary Filter**: Fuses 6-wheel encoders with IMU gyro/accelerometer to correct wheel-slip yaw drift and compute roll/pitch tilt angles.<br>• **360° LiDAR Processing**: Computes minimum safe distances across front, side, and rear sectors.<br>• **Trash Recognition**: Extracts nearest collectible trash item distance and bearing from Webots Camera recognition objects. | Assignment 2 (Sensor Fusion & IMU/Odom Drift) |
+| **1. Sensing & Perception** | `perception_node.py` | • **Complementary Filter**: Fuses 4-wheel encoders with IMU gyro/accelerometer to correct wheel-slip yaw drift and reads roll/pitch tilt angles from `InertialUnit`.<br>• **360° LiDAR Processing**: Computes minimum safe distances across front, side, and rear sectors.<br>• **Trash Recognition**: Extracts nearest collectible trash item distance and bearing from Webots Camera recognition objects. | Assignment 2 (Sensor Fusion & IMU/Odom Drift) |
 | **2. Reasoning, Planning & Decision-Making** | `behavior_tree_node.py` | • **Reactive Layer (`py_trees`)**: Continuously checks IMU tilt thresholds (rollover prevention) and 360° LiDAR proximity (collision avoidance including reversing).<br>• **Deliberative Layer (`py_trees`)**: Coordinates patrolling, approaching detected trash, triggering the arm Sub-FSM, and (stretch goal) returning to the depot when full. | Assignment 3 (Hybrid Reactive–Deliberative Behavior Trees) |
-| **3. Act & Control** | `base_controller_node.py` (Base PID, sole `/cmd_vel` publisher)<br>`arm_fsm_node.py` (Arm Sub-FSM) | • **Terrain-Adaptive Base PID**: Closed-loop angular & linear velocity control to park at the exact arm reach standoff ($d_{\text{pick}}$), scaling max velocity inversely with IMU tilt.<br>• **Arm Pick-and-Place Sub-FSM**: 5-state sequence driving `arm1`–`arm5` and gripper fingers to grasp trash in front and deposit it into the rear onboard bin. | Assignment 4 (5-DOF Arm Kinematics, PID & Pick-and-Place FSM) |
+| **3. Act & Control** | `base_controller_node.py` (Base PID, sole `/cmd_vel` publisher)<br>`arm_fsm_node.py` (Arm Sub-FSM) | • **Terrain-Adaptive Base PID**: Closed-loop angular & linear velocity control to park at the exact arm reach standoff ($d_{\text{pick}}$), scaling max velocity inversely with IMU tilt.<br>• **Arm Pick-and-Place Sub-FSM**: 5-state sequence driving `arm1`–`arm5` and gripper fingers to grasp trash in front and deposit it into the onboard bin. | Assignment 4 (5-DOF Arm Kinematics, PID & Pick-and-Place FSM) |
 
 ---
 
@@ -112,7 +112,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | `/scan_front`, `/scan_rear` | `sensor_msgs/LaserScan` | `rover_driver` | `perception_node` | 360° 2D LiDAR scans (front and rear units, self-occluded sectors masked) |
 | `/imu/data_raw` | `sensor_msgs/Imu` | `rover_driver` | `perception_node` | Raw IMU gyroscope & accelerometer data |
-| `/wheel_odom_raw` | `nav_msgs/Odometry` | `rover_driver` | `perception_node` | Raw 6-wheel encoder odometry |
+| `/wheel_odom_raw` | `nav_msgs/Odometry` | `rover_driver` | `perception_node` | Raw 4-wheel encoder odometry |
 | `/camera/recognized_trash` | `geometry_msgs/PointStamped` | `rover_driver` | `perception_node` | Closest trash position in robot frame (`x, y, z`) |
 | `/rover/odom_filtered` | `nav_msgs/Odometry` | `perception_node` | `behavior_tree_node` | Slip-compensated Complementary Filter pose |
 | `/rover/tilt_state` | `geometry_msgs/Vector3` | `perception_node` | `behavior_tree_node` | `x`: roll (rad), `y`: pitch (rad), `z`: tilt speed scale $[0.2, 1.0]$ |
@@ -161,6 +161,6 @@ flowchart LR
 
 ## Sources
 - [TEKS4430 Course Project Specification](../ASSIGNMENT.md) (`https://github.com/TEKS4430/Autumn-2026_project`)
-- [Webots R2025a Koala Documentation](https://cyberbotics.com/doc/guide/koala)
+- [Webots R2025a Pioneer 3-AT Documentation](https://cyberbotics.com/doc/guide/pioneer-3at)
 - [Webots R2025a KUKA YouBot Documentation](https://cyberbotics.com/doc/guide/youbot)
 - [py_trees Official Documentation](https://py-trees.readthedocs.io/en/devel/)

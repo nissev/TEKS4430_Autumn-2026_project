@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 8, 2026 at 11:38
+last_updated: November 10, 2026 at 18:57
 ---
 
 # ADR-005: Terrain-Adaptive Control & Grasping Reliability
@@ -11,7 +11,7 @@ last_updated: November 8, 2026 at 11:38
 - **Date**: 2026-11-08
 
 ## Context
-Layer 3 (Act & Control) requires closed-loop control for both the 6WD mobile base and the 5-DOF manipulator arm. Driving at full speed over rough slopes risks tipping or overshooting the target pick position, and physical finger grasping in Webots can occasionally slip when the robot is pitched on uneven ground.
+Layer 3 (Act & Control) requires closed-loop control for both the 4WD Pioneer 3-AT mobile base and the 5-DOF manipulator arm. Driving at full speed over rough slopes risks tipping or overshooting the target pick position, and physical finger grasping in Webots can occasionally slip when the robot is pitched on uneven ground.
 
 ## Decision
 1. **Terrain-Adaptive Base PID Controller (`base_controller_node.py`)**:
@@ -26,7 +26,7 @@ Layer 3 (Act & Control) requires closed-loop control for both the 6WD mobile bas
   - Demonstrates genuine cyber-physical feedback between IMU terrain sensing and base actuation speed.
   - Grasping is fully physical, so the arm kinematics and contact results are honest.
 - **Cons**:
-  - Requires tuning Base PID gains and standoff distance ($d_{\text{pick}}$) to match the arm's front reach envelope on the Koala chassis.
+  - Requires tuning Base PID gains and standoff distance ($d_{\text{pick}}$) to match the arm's front reach envelope on the Pioneer 3-AT chassis.
   - Grasps may slip on slopes; a grasp-assist fallback would be needed if so.
 
 ## Sources

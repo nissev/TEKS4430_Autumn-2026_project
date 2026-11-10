@@ -22,7 +22,7 @@ services:
       - WEBOTS_SHARED_FOLDER=/tmp       # forces controller_protocol() == "tcp"
       - WEBOTS_HOST=${WEBOTS_HOST:-host.docker.internal}
       # Robot name must match the `name` field in src/worlds/roadside_arena.wbt
-      - WEBOTS_CONTROLLER_URL=tcp://${WEBOTS_HOST:-host.docker.internal}:1234/${ROBOT_NAME:-koala_rover}
+      - WEBOTS_CONTROLLER_URL=tcp://${WEBOTS_HOST:-host.docker.internal}:1234/${ROBOT_NAME:-pioneer_rover}
 
     network_mode: ${NETWORK_MODE:-bridge}
     extra_hosts:
