@@ -47,7 +47,7 @@ The system implements the three core CPS architectural layers:
 - **Webots R2025a** installed natively on the host OS (Windows / macOS / Linux).
 - **Docker Desktop** running on the host OS.
 
-### Step 1: First-Time Docker Setup *(Upcoming in M1.2)*
+### Step 1: First-Time Docker Setup
 ```bash
 cp .env.example .env
 # Linux: uncomment NETWORK_MODE=host and WEBOTS_HOST=localhost
@@ -56,12 +56,12 @@ cp .env.example .env
 docker compose build
 ```
 
-### Step 2: Launch Webots World *(Upcoming in M1.3–M1.4)*
+### Step 2: Launch Webots World
 1. Open **Webots R2025a**.
 2. Go to **File $\rightarrow$ Open World...** and select `src/worlds/roadside_arena.wbt`.
 3. Press **Play (▶)** in Webots before starting the ROS 2 driver.
 
-### Step 3: Build & Run in ROS 2 Container *(Upcoming in M1.5–M4)*
+### Step 3: Build & Run in ROS 2 Container *(Upcoming in M1.4–M4)*
 
 **Terminal 1 — Start Container, Build & Launch Driver:**
 ```bash
@@ -96,7 +96,7 @@ ros2 topic pub --once /arm/pick_trigger std_msgs/msg/Bool "{data: true}"
 
 | Milestone | Description | Status |
 | :---: | :--- | :---: |
-| **M1** | Architecture, Docker Setup & Lightweight Webots World | 🔄 In Progress (`M1.1` Done) |
+| **M1** | Architecture, Docker Setup & Lightweight Webots World | 🔄 In Progress (`M1.1`–`M1.3` Done) |
 | **M2** | Layer 1: Sensing, Perception & Complementary Filter | ⏳ Pending |
 | **M3** | Layer 3: Terrain-Adaptive Base PID & 5-DOF Arm Sub-FSM | ⏳ Pending |
 | **M4** | Layer 2: Hybrid Behavior Tree (`py_trees`) Integration | ⏳ Pending |
