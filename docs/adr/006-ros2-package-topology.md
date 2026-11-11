@@ -14,8 +14,8 @@ last_updated: November 10, 2026 at 18:57
 The ROS 2 codebase must be easy to build, debug, and launch inside the course's standard Docker (`ros2_course` / ROS 2 Jazzy) + Host Webots R2025a architecture, while maintaining clear separation between the three CPS layers.
 
 ## Decision
-We will organize the implementation as a **Single ROS 2 Python Package (`roadside_rover_pkg`)** with modular node scripts launched via a single `rover.launch.py`:
-- `rover_driver.py`: `webots_ros2_driver` plugin bridging the Pioneer 3-AT 4WD base, 5-DOF arm, gripper, two LiDARs, Camera `Recognition`, and IMU/InertialUnit.
+We will organize the implementation as a **Single ROS 2 Python Package (`isoroba_cleaner_pkg`)** with modular node scripts launched via a single `cleaner.launch.py`:
+- `rover_driver.py`: `webots_ros2_driver` plugin bridging the KUKA YouBot 4-wheel Mecanum base, 5-DOF arm, parallel gripper, dual LiDARs, Camera `Recognition`, and IMU/InertialUnit.
 - `perception_node.py`: Layer 1 — Complementary Filter (IMU + 4-wheel encoders), LiDAR sector processor, and trash target tracker.
 - `behavior_tree_node.py`: Layer 2 - `py_trees` reactive/deliberative tree; selects the base mode (`/rover/base_mode`) and triggers/aborts the arm FSM.
 - `base_controller_node.py`: Layer 3 Base Control - Terrain-Adaptive Base PID; the **sole `/cmd_vel` publisher** (acts as the velocity arbiter based on the BT-selected mode).

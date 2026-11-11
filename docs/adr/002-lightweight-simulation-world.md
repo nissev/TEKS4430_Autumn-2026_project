@@ -16,7 +16,7 @@ The initial simulation world modeled an off-road Finnish rural roadside with an 
 In urban service robotics, pedestrian precincts like *Iso Roobertinkatu* ("Iso-Roba") in Helsinki are paved, flat walking streets flanked by building facades and furnished with outdoor cafes, benches, bicycle racks, and trash bins.
 
 ## Decision
-The world `src/worlds/roadside_arena.wbt` (or `isoroba_arena.wbt`) models an **Iso-Roba style pedestrian walking district**:
+The world `src/worlds/isoroba_arena.wbt` models an **Iso-Roba style pedestrian walking district**:
 - **Ground**: Flat paved stone/cobblestone surface (single flat `Plane` or low-poly mesh, eliminating `ElevationGrid` computation).
 - **Boundaries**: Continuous multi-story building facade boxes on both sides representing shopfronts and apartment buildings.
 - **Urban Furniture & Obstacles**:

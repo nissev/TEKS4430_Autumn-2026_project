@@ -1,4 +1,4 @@
-# Roadside Rover — Webots runs natively on host | ROS 2 Jazzy runs in this container
+# Iso-Roba Urban Clean-Up Robot (KUKA YouBot) — Webots on host | ROS 2 Jazzy in container
 # Pattern from Autumn-2026_Assignment_4 (TCP extern controller).
 
 services:
@@ -6,14 +6,14 @@ services:
     build:
       context: ./docker
       dockerfile: Dockerfile
-    image: course-ros2-rover:jazzy
+    image: course-ros2-cleaner:jazzy
     platform: linux/amd64
 
     volumes:
       - ./src:/ros2_ws/src
-      - ros2_rover_build:/ros2_ws/build
-      - ros2_rover_install:/ros2_ws/install
-      - ros2_rover_log:/ros2_ws/log
+      - ros2_cleaner_build:/ros2_ws/build
+      - ros2_cleaner_install:/ros2_ws/install
+      - ros2_cleaner_log:/ros2_ws/log
 
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -21,8 +21,8 @@ services:
       - WEBOTS_HOME=/opt/webots         # suppress "install Webots?" prompt
       - WEBOTS_SHARED_FOLDER=/tmp       # forces controller_protocol() == "tcp"
       - WEBOTS_HOST=${WEBOTS_HOST:-host.docker.internal}
-      # Robot name must match the `name` field in src/worlds/roadside_arena.wbt
-      - WEBOTS_CONTROLLER_URL=tcp://${WEBOTS_HOST:-host.docker.internal}:1234/${ROBOT_NAME:-pioneer_rover}
+      # Robot name must match the `name` field in src/worlds/isoroba_arena.wbt
+      - WEBOTS_CONTROLLER_URL=tcp://${WEBOTS_HOST:-host.docker.internal}:1234/${ROBOT_NAME:-youbot}
 
     network_mode: ${NETWORK_MODE:-bridge}
     extra_hosts:
@@ -32,6 +32,6 @@ services:
     tty: true
 
 volumes:
-  ros2_rover_build:
-  ros2_rover_install:
-  ros2_rover_log:
+  ros2_cleaner_build:
+  ros2_cleaner_install:
+  ros2_cleaner_log:

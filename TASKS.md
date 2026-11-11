@@ -33,12 +33,12 @@ last_updated: November 11, 2026 at 16:15
 
 ### Milestone 1 (M1): Architecture, Docker Setup & Lightweight Webots World
 - [x] **M1.1**: Document system architecture ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) and Architecture Decision Records (`docs/adr/001`–`007`) updated for the Iso-Roba YouBot concept.
-- [x] **M1.2**: Scaffold Docker & ROS 2 Jazzy workspace (`docker-compose.yml`, `Dockerfile`, `.env.example`, and `src/roadside_rover_pkg`).
-- [ ] **M1.3**: Build lightweight Finnish pedestrian street Webots world (`src/worlds/roadside_arena.wbt` / `isoroba_arena.wbt`): flat paved pedestrian corridor flanked by building facades, benches, bike racks, terrace fences, and `Recognition`-tagged litter items (see ADR-002).
-- [ ] **M1.4**: Configure native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`) with its 5-DOF arm (`arm1`–`arm5`), 2-finger parallel gripper (`finger::left`, `finger::right`), onboard rear collection bin, 2D LiDAR (`HokuyoURG04LX`), Camera (with `Recognition`), and wheel encoders. Verify arm ground reach and stow/bin drop.
+- [x] **M1.2**: Scaffold Docker & ROS 2 Jazzy workspace (`docker-compose.yml`, `Dockerfile`, `.env.example`, and `src/isoroba_cleaner_pkg`).
+- [x] **M1.3**: Build lightweight Finnish pedestrian street Webots world (`src/worlds/isoroba_arena.wbt`): flat paved pedestrian corridor flanked by building facades, benches, bike racks, terrace fences, and `Recognition`-tagged litter items (see ADR-002).
+- [x] **M1.4**: Configure native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`) with its 5-DOF arm (`arm1`–`arm5`), 2-finger parallel gripper (`finger::left`, `finger::right`), onboard rear collection bin, dual 2D LiDARs (`lidar_front`, `lidar_rear`), Camera (with `Recognition`), and wheel encoders. Verify arm ground reach and stow/bin drop.
 - [ ] **M1.5**: Implement `rover_driver.py` (`webots_ros2_driver` plugin):
   - [ ] **M1.5a**: 4-wheel Mecanum holonomic drive + odometry (`/cmd_vel` linear $x, y$ + angular $z$, `/wheel_odom_raw`).
-  - [ ] **M1.5b**: 2D LiDAR and IMU topics (`/scan`, `/imu/data_raw`).
+  - [ ] **M1.5b**: Dual 2D LiDAR and IMU topics (`/scan_front`, `/scan_rear`, `/imu/data_raw`).
   - [ ] **M1.5c**: Camera `Recognition` conversion to `/camera/recognized_trash`.
   - [ ] **M1.5d**: Arm joint and gripper command interfaces (`/arm/joint_N/cmd`, `/arm/gripper/cmd`); verify manual teleop/arm movement.
 

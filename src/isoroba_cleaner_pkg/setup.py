@@ -1,7 +1,7 @@
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'roadside_rover_pkg'
+package_name = 'isoroba_cleaner_pkg'
 
 setup(
     name=package_name,
@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer='NisseV',
     maintainer_email='user@example.com',
-    description='Autonomous roadside trash collection rover',
+    description='Iso-Roba urban pedestrian street clean-up robot',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={'console_scripts': []},

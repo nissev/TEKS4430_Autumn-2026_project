@@ -1,0 +1,379 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Pavement.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/buildings/protos/SimpleBuilding.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/street_furniture/protos/Bench.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/street_furniture/protos/UrbanFence.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/street_furniture/protos/PublicBin.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/drinks/protos/Can.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/fruits/protos/Apple.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/kitchen/breakfast/protos/BiscuitBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/humans/pedestrian/protos/Pedestrian.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/hokuyo/protos/HokuyoUrg04lx.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/kuka/youbot/protos/Youbot.proto"
+
+WorldInfo {
+  info [
+    "Iso-Roba Pedestrian Street Clean-Up Robot Arena"
+    "Autonomous Cyber-Physical Systems (TEKS4430)"
+    "KUKA youBot mobile manipulator in a realistic Finnish pedestrian walking street environment."
+  ]
+  title "Iso-Roba Pedestrian Street"
+  basicTimeStep 16
+  contactProperties [
+    ContactProperties {
+      coulombFriction [
+        1.2
+      ]
+    }
+    ContactProperties {
+      material1 "youBot"
+      coulombFriction [
+        1.5
+      ]
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.026545711905818888 0.9942990167509936 -0.10327047238887051 0.9512545578752065
+  position -23.446518336103274 0.4189822293441541 29.93138751465211
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Solid {
+  translation 0 0 -0.05
+  children [
+    Shape {
+      appearance Pavement {
+        textureTransform TextureTransform {
+          scale 20 7
+        }
+      }
+      geometry DEF FLOOR_BOX Box {
+        size 20.4 7 0.1
+      }
+    }
+  ]
+  name "pavement"
+  boundingObject USE FLOOR_BOX
+}
+Solid {
+  translation -8.5 0 0.001
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.2 0.7 0.35
+        transparency 0.35
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 1.8 1.8 0.002
+      }
+    }
+  ]
+  name "depot_zone"
+}
+Solid {
+  translation -10.3 0 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.6 0.6 0.6
+        roughness 1
+      }
+      geometry DEF END_WALL Box {
+        size 0.2 7 4
+      }
+    }
+  ]
+  name "west_boundary"
+  boundingObject USE END_WALL
+}
+Solid {
+  translation 10.3 0 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.6 0.6 0.6
+        roughness 1
+      }
+      geometry USE END_WALL
+    }
+  ]
+  name "east_boundary"
+  boundingObject USE END_WALL
+}
+SimpleBuilding {
+  translation -5 3.5 0
+  name "building_north_west"
+  floorHeight 3.2
+  corners [
+    5 0
+    5 8
+    -5 8
+    -5 0
+  ]
+  wallType "classic building"
+  roofType "slate"
+  roofShape "flat roof"
+}
+SimpleBuilding {
+  translation 5 3.5 0
+  name "building_north_east"
+  floorHeight 3.2
+  floorNumber 4
+  corners [
+    5 0
+    5 8
+    -5 8
+    -5 0
+  ]
+  wallType "old building"
+  roofType "gravel"
+  roofShape "flat roof"
+}
+SimpleBuilding {
+  translation -5 -3.5 0
+  name "building_south_west"
+  floorHeight 3.2
+  corners [
+    -5 0
+    -5 -8
+    5 -8
+    5 0
+  ]
+  wallType "old brick building"
+  roofShape "flat roof"
+}
+SimpleBuilding {
+  translation 5 -3.5 0
+  name "building_south_east"
+  floorHeight 3.2
+  floorNumber 4
+  corners [
+    -5 0
+    -5 -8
+    5 -8
+    5 0
+  ]
+  wallType "residential building"
+  roofType "slate"
+  roofShape "flat roof"
+}
+Bench {
+  translation -5.5 3.25 0
+  rotation 0 0 1 -1.5707963
+  name "bench_north"
+}
+PublicBin {
+  translation -4.5 -3.1 0
+  name "public_bin"
+}
+Bench {
+  translation 1 -3.25 0
+  rotation 0 0 1 1.5707963
+  name "bench_south_1"
+}
+Bench {
+  translation 5 -3.25 0
+  rotation 0 0 1 1.5707963
+  name "bench_south_2"
+}
+UrbanFence {
+  translation -0.77 2.65 0
+  name "cafe_fence_west"
+}
+UrbanFence {
+  translation 0 1.87 0
+  rotation 0 0 1 1.5707963
+  name "cafe_fence_front_1"
+}
+UrbanFence {
+  translation 1.55 1.87 0
+  rotation 0 0 1 1.5707963
+  name "cafe_fence_front_2"
+}
+UrbanFence {
+  translation 2.32 2.65 0
+  name "cafe_fence_east"
+}
+Pedestrian {
+  translation -1.5 0.9 1.27
+  rotation 0 0 1 -1.5707963
+  name "pedestrian_1"
+  controller "<none>"
+  shirtColor 0.82 0.25 0.2
+  pantsColor 0.2 0.22 0.38
+  enableBoundingObject TRUE
+}
+Pedestrian {
+  translation 3.5 -1.2 1.27
+  rotation 0 0 1 3.14159265
+  name "pedestrian_2"
+  controller "<none>"
+  shirtColor 0.22 0.52 0.72
+  pantsColor 0.18 0.18 0.22
+  enableBoundingObject TRUE
+}
+Can {
+  translation -3.5 0.3 0.061
+  name "litter_can"
+  mass 0.08
+}
+Apple {
+  translation 1.5 -0.6 0.03
+  name "litter_apple"
+  mass 0.1
+}
+BiscuitBox {
+  translation 5 0.2 0.025
+  rotation 0 0 1 0.785398
+  name "litter_box"
+  size 0.05 0.08 0.05
+  mass 0.1
+}
+Youbot {
+  translation -8.5 0 0.095
+  name "youbot"
+  controller "<extern>"
+  bodySlot [
+    HokuyoUrg04lx {
+      translation 0.3 0 0.08
+      name "lidar_front"
+    }
+    HokuyoUrg04lx {
+      translation -0.3 0 0.08
+      rotation 0 0 1 3.14159265
+      name "lidar_rear"
+    }
+    Camera {
+      translation 0.18 0 0.15
+      rotation 0 1 0 0.4363323
+      fieldOfView 1.05
+      width 640
+      height 480
+      recognition Recognition {
+        maxRange 4
+      }
+    }
+    InertialUnit {
+    }
+    Gyro {
+    }
+    Accelerometer {
+    }
+    Solid {
+      translation -0.12 0 0.08
+      children [
+        Shape {
+          appearance DEF BIN_APP PBRAppearance {
+            baseColor 0.25 0.35 0.3
+            roughness 0.6
+            metalness 0.1
+          }
+          geometry Box {
+            size 0.22 0.22 0.01
+          }
+        }
+        Pose {
+          translation 0.105 0 0.05
+          children [
+            Shape {
+              appearance USE BIN_APP
+              geometry Box {
+                size 0.01 0.22 0.1
+              }
+            }
+          ]
+        }
+        Pose {
+          translation -0.105 0 0.05
+          children [
+            Shape {
+              appearance USE BIN_APP
+              geometry Box {
+                size 0.01 0.22 0.1
+              }
+            }
+          ]
+        }
+        Pose {
+          translation 0 0.105 0.05
+          children [
+            Shape {
+              appearance USE BIN_APP
+              geometry Box {
+                size 0.2 0.01 0.1
+              }
+            }
+          ]
+        }
+        Pose {
+          translation 0 -0.105 0.05
+          children [
+            Shape {
+              appearance USE BIN_APP
+              geometry Box {
+                size 0.2 0.01 0.1
+              }
+            }
+          ]
+        }
+      ]
+      name "collection_bin"
+      boundingObject Group {
+        children [
+          Pose {
+            translation 0 0 0.005
+            children [
+              Box {
+                size 0.22 0.22 0.01
+              }
+            ]
+          }
+          Pose {
+            translation 0.105 0 0.05
+            children [
+              Box {
+                size 0.01 0.22 0.1
+              }
+            ]
+          }
+          Pose {
+            translation -0.105 0 0.05
+            children [
+              Box {
+                size 0.01 0.22 0.1
+              }
+            ]
+          }
+          Pose {
+            translation 0 0.105 0.05
+            children [
+              Box {
+                size 0.2 0.01 0.1
+              }
+            ]
+          }
+          Pose {
+            translation 0 -0.105 0.05
+            children [
+              Box {
+                size 0.2 0.01 0.1
+              }
+            ]
+          }
+        ]
+      }
+      physics Physics {
+        density -1
+        mass 0.5
+      }
+    }
+  ]
+}

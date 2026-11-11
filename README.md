@@ -57,15 +57,15 @@ docker compose build
 
 ### Step 2: Launch Webots World
 1. Open **Webots R2025a**.
-2. Open `src/worlds/roadside_arena.wbt` (or updated `isoroba_arena.wbt`).
+2. Open `src/worlds/isoroba_arena.wbt`.
 3. Press **Play (▶)** in Webots before starting the ROS 2 driver.
 
 ### Step 3: Build & Launch ROS 2 Container
 ```bash
 docker compose run --rm ros2 bash
-colcon build --symlink-install --packages-select roadside_rover_pkg
+colcon build --symlink-install --packages-select isoroba_cleaner_pkg
 source install/setup.bash
-ros2 launch roadside_rover_pkg rover.launch.py
+ros2 launch isoroba_cleaner_pkg cleaner.launch.py
 ```
 
 ---

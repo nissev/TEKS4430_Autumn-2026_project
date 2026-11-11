@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>roadside_rover_pkg</name>
+  <name>isoroba_cleaner_pkg</name>
   <version>0.0.1</version>
-  <description>Autonomous roadside trash collection rover (Koala 6WD + 5-DOF arm) for Webots</description>
+  <description>Iso-Roba urban pedestrian street clean-up robot (KUKA YouBot) for Webots</description>
   <maintainer email="user@example.com">NisseV</maintainer>
   <license>Apache-2.0</license>
 

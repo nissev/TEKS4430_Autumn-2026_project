@@ -25,7 +25,7 @@ flowchart TD
         Actuators["Actuators: 4x Mecanum Wheel Motors (wheel1..wheel4),\n5-DOF Arm (arm1..arm5), Gripper (finger::left, finger::right)"]
     end
 
-    subgraph ROS2["ROS 2 Jazzy (roadside_rover_pkg)"]
+    subgraph ROS2["ROS 2 Jazzy (isoroba_cleaner_pkg)"]
         Driver["rover_driver.py\n(Webots ROS 2 Bridge)"]
 
         subgraph Layer1["Layer 1: Sensing & Perception (perception_node.py)"]
