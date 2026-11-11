@@ -1,34 +1,33 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 4 Argon (Medium)
+model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 10, 2026 at 18:57
+last_updated: November 11, 2026 at 16:15
 ---
 
-# ADR-005: Terrain-Adaptive Control & Grasping Reliability
+# ADR-005: Holonomic Base PID & Manipulation Control
 
-- **Status**: Accepted
+- **Status**: Accepted (revised 2026-11-11: updated for YouBot Mecanum holonomic control)
 - **Date**: 2026-11-08
 
 ## Context
-Layer 3 (Act & Control) requires closed-loop control for both the 4WD Pioneer 3-AT mobile base and the 5-DOF manipulator arm. Driving at full speed over rough slopes risks tipping or overshooting the target pick position, and physical finger grasping in Webots can occasionally slip when the robot is pitched on uneven ground.
+Layer 3 (Act & Control) requires closed-loop control for both the mobile base and the 5-DOF manipulator arm. On a pedestrian street, the robot must align cleanly with small litter items on the ground without awkward multi-point skid-steer maneuvers, and the arm must reliably grasp objects and swing them backward into the onboard bin.
 
 ## Decision
-1. **Terrain-Adaptive Base PID Controller (`base_controller_node.py`)**:
-   - Uses dual PID loops on target bearing error ($e_\theta$) and standoff distance error ($e_d = d - d_{\text{pick}}$) to smoothly align and park the rover directly in front of detected trash.
-   - Dynamically scales maximum linear velocity inversely with IMU tilt magnitude ($\gamma = \sqrt{\text{roll}^2 + \text{pitch}^2}$), slowing the rover down on slopes and bumps for stability.
-2. **5-DOF Arm Control**:
-   - Uses physical parallel-gripper contact (`finger::left`, `finger::right`) around the `Box` trash item.
-   - A Supervisor-based grasp-assist (weld/attach) fallback is **not** part of the baseline; it can be added later only if ODE contact physics slip proves to be a problem.
+1. **Holonomic Base PID Controller (`base_controller_node.py`)**:
+   - Takes full advantage of the YouBot's 4-wheel Mecanum drive.
+   - Controls 3 degrees of freedom independently: forward/backward velocity $v_x$, lateral strafe velocity $v_y$, and angular yaw velocity $\omega_z$.
+   - Simultaneously minimizes lateral alignment error ($e_y$) and standoff distance error ($e_x = d - d_{\text{pick}}$) to bring the target item directly into the 5-DOF arm's frontal pick zone.
+2. **5-DOF Arm Trajectory Control**:
+   - Positions `arm1` through `arm5` through pre-calculated, reachable joint angles on the YouBot chassis.
+   - Physical contact grasping using parallel gripper fingers on flat pavement.
 
 ## Consequences
 - **Pros**:
-  - Demonstrates genuine cyber-physical feedback between IMU terrain sensing and base actuation speed.
-  - Grasping is fully physical, so the arm kinematics and contact results are honest.
+  - Mecanum strafing allows lateral adjustment without changing heading, resulting in significantly faster and more accurate parking than differential/skid-steer bases.
+  - Arm joint trajectories follow course Assignment 4 conventions (`arm1`–`arm5`), simplifying tuning and validation.
 - **Cons**:
-  - Requires tuning Base PID gains and standoff distance ($d_{\text{pick}}$) to match the arm's front reach envelope on the Pioneer 3-AT chassis.
-  - Grasps may slip on slopes; a grasp-assist fallback would be needed if so.
+  - Forward reach is limited to ~0.35 m from the front bumper, requiring precise base stopping tolerance ($\pm 2\text{ cm}$).
 
 ## Sources
-- Course Assignment 4 (`task2_pid_joint.py`, `task3_pick_place.py`)
-- [Webots Supervisor Node Documentation](https://cyberbotics.com/doc/reference/supervisor)
+- Course Assignment 4 (`task2_pid_joint.py`, `task3_pick_place.py`, `youbot_arm_driver.py`)

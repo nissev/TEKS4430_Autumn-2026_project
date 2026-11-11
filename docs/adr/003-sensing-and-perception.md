@@ -1,34 +1,34 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 4 Argon (Medium)
+model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 10, 2026 at 18:57
+last_updated: November 11, 2026 at 16:15
 ---
 
-# ADR-003: Sensing, Perception & State Estimation Pipeline
+# ADR-003: Sensing & Perception Pipeline
 
-- **Status**: Accepted
+- **Status**: Accepted (revised 2026-11-11: updated for flat urban sidewalk & YouBot sensors)
 - **Date**: 2026-11-08
 
 ## Context
-Layer 1 of the CPS architecture requires observing the environment and interpreting noisy/drifting sensor data on rough terrain. Specifically:
-1. The rover needs $360^\circ$ obstacle awareness to steer around rocks and safely reverse out of steep ditches/dead-ends.
-2. It must identify collectible trash items and estimate their 3D relative position without lagging the laptop CPU.
-3. Wheel encoders alone suffer from heading drift on slopes and bumps, requiring sensor fusion with an IMU.
+Layer 1 of the CPS architecture requires observing the urban pedestrian environment and interpreting sensor data to support collision avoidance and litter manipulation:
+1. The robot must detect street obstacles (benches, terrace railings, lamp posts, bike racks) with 2D LiDAR to prevent collisions while navigating the corridor.
+2. It must identify litter items on the pavement and calculate their 3D relative bearing and distance without high CPU overhead.
+3. Wheel odometry drifts over time (especially on Mecanum rollers during lateral strafing), requiring yaw drift stabilization.
 
 ## Decision
-We will implement a unified `perception_node.py` combining three perception channels:
-1. **360° 2D LiDAR (`RobotisLds01`) x2 (front + rear units)**: Each unit masks its self-occluded angles (arm, bin, chassis) and is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`, `rear`) to support both forward obstacle avoidance and safe reversing.
-2. **Webots Camera with Built-in `Recognition`**: Uses Webots' native object recognition node (`recognitionColors`) to extract 3D relative positions of trash items in the camera frame with near-zero CPU overhead, converting them into target distance and bearing (`/rover/trash_target`).
-3. **IMU + 4-Wheel Encoder Complementary Filter**: Fuses high-frequency gyroscope yaw rate and 4WD wheel odometry (building on Assignment 2) to publish slip-compensated pose (`/rover/odom_filtered`), while the Webots `InertialUnit` provides roll and pitch angles directly (the filter is only needed for yaw) (`/rover/tilt_state`).
-   - *Note*: Long-term outdoor **GPS localization** is documented in the system architecture as a future extension but scoped out of the local PoC arena.
+We implement `perception_node.py` combining three perception channels:
+1. **2D LiDAR Sector Processing**: The YouBot's front 2D LiDAR (`HokuyoURG04LX`) scan is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`) to guide obstacle avoidance and docking clearance.
+2. **Webots Camera with Native `Recognition`**: Uses Webots' built-in object recognition to extract 3D positions of litter targets in the camera frame, translating them into target coordinates (`/rover/trash_target`).
+3. **Mecanum Odometry + Gyro Fusion**: Fuses 4-wheel Mecanum kinematic odometry with high-frequency Gyro yaw to maintain heading stability on the flat pavement (`/rover/odom_filtered`).
+   - *Note*: Pitch/roll tilt monitoring is removed because the paved pedestrian street is flat.
 
 ## Consequences
 - **Pros**:
-  - Directly builds on course concepts from Assignment 2 (Complementary Filter & IMU/odom drift) and Assignment 3 (LiDAR sector perception).
-  - Native Webots `Recognition` eliminates heavy OpenCV image processing loops while providing accurate 3D target coordinates for visual servoing.
+  - Direct alignment with concepts practiced in Assignment 2 (odometry & drift) and Assignment 3 (LiDAR sector processing).
+  - Near-zero latency target tracking via Camera `Recognition`.
 - **Cons**:
-  - Camera `Recognition` relies on simulator metadata rather than raw pixel segmentation.
+  - Mecanum wheel roller slippage causes minor longitudinal and lateral odometry drift; closed-loop camera tracking compensates for this during target approach.
 
 ## Sources
 - [Webots R2025a Camera Recognition Documentation](https://cyberbotics.com/doc/reference/camera#recognition)

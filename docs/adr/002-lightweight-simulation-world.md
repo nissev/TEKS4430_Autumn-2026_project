@@ -1,38 +1,40 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 4 Argon (Medium)
+model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 9, 2026 at 17:59
+last_updated: November 11, 2026 at 16:15
 ---
 
-# ADR-002: Lightweight Simulation Environment Design
+# ADR-002: Lightweight Simulation World (Iso-Roba Pedestrian Street)
 
-- **Status**: Accepted (revised 2026-11-09: primitive-box arena replaced by a coarse `ElevationGrid` roadside)
+- **Status**: Accepted (revised 2026-11-11: replaced `ElevationGrid` roadside ditch with flat pedestrian street inspired by Iso Roobertinkatu)
 - **Date**: 2026-11-08
 
 ## Context
-The simulation must represent a Finnish-style roadside (road, shoulder, grass slope, ditch, back slope, forest edge) with rocks and trash, so that real disturbances occur (IMU pitch/roll tilt and wheel-slip odometry drift). The development machine is a laptop with limited CPU/GPU resources. Webots' procedural `UnevenTerrain` (fine `ElevationGrid`) was judged too heavy for 6 wheels and dynamic objects, and an initial primitive-box ramp arena looked unlike a real roadside.
+The initial simulation world modeled an off-road Finnish rural roadside with an uneven `ElevationGrid` (slopes, mounds, and ditches). This required heavy ODE mesh contact physics and caused 2D LiDAR to produce false obstacle readings when the robot pitched on slopes.
+
+In urban service robotics, pedestrian precincts like *Iso Roobertinkatu* ("Iso-Roba") in Helsinki are paved, flat walking streets flanked by building facades and furnished with outdoor cafes, benches, bicycle racks, and trash bins.
 
 ## Decision
-The world `src/worlds/roadside_arena.wbt` is a hand-editable file; only its `DEF TERRAIN ElevationGrid` block is produced by the small script `src/worlds/make_terrain.py` (a road cross-section profile repeated along the road plus seeded random waves and Gaussian mounds on the off-road terrain):
-- **Terrain**: one **coarse `ElevationGrid`** (30 x 17 m, 0.5 m cells, about 2000 cells), static, with a cross-section profile: raised road bed, gravel shoulder, about 18° grass slope, ditch floor (floor about 1.0 m below the road surface), about 15° back slope, forest floor, plus seeded roughness (`WAVES` and `MOUNDS`) fading in off the shoulder. The slopes and roughness provide the tilt and slip disturbances.
-- **Road**: 7.5 m, two lanes with edge/centre lines, as visual-only boxes (no collision).
-- **Obstacles**: low-poly `Box`/`Cylinder` rocks, one static parked car on the road, 12 visual-only low-poly spruce trees (no collision).
-- **Trash**: small coloured `Box` solids with `recognitionColors` (`Recognition` target of the front camera).
-- **Boundary**: four perimeter walls (forest, road barrier, two ends).
-- **Depot**: flat visual patch in the ditch (stretch goal).
-- Matte `PBRAppearance` only, no textures, shadows disabled. Cell size can be coarsened (edit `xSpacing`/`ySpacing` and `xDimension`/`yDimension` in `make_terrain.py`) if FPS drops.
+The world `src/worlds/roadside_arena.wbt` (or `isoroba_arena.wbt`) models an **Iso-Roba style pedestrian walking district**:
+- **Ground**: Flat paved stone/cobblestone surface (single flat `Plane` or low-poly mesh, eliminating `ElevationGrid` computation).
+- **Boundaries**: Continuous multi-story building facade boxes on both sides representing shopfronts and apartment buildings.
+- **Urban Furniture & Obstacles**:
+  - Street park benches (metal/wood benches).
+  - Bicycle racks with parked bicycles.
+  - Outdoor cafe terrace boundaries (low railings, tables, and chairs).
+  - Street lamp posts and public litter bins.
+- **Litter Items**: Small colored `Box`/`Cylinder` objects with `recognitionColors` (representing discarded coffee cups, soda cans, and fast-food containers) placed on the pavement.
+- **Depot**: Marked visual zone along the corridor where the robot docks to empty its onboard bin.
 
 ## Consequences
 - **Pros**:
-  - Recognisable roadside scene and deterministic, reproducible slopes and bumps (fixed RNG seed) for IMU rollover protection and terrain-adaptive speed scaling.
-  - Height-field collision at about 2000 cells ran acceptably on the target laptop (visually verified by the author).
-  - Base slope angles are tuned by editing six numbers in `PROFILE`, with surface roughness controlled by `WAVES` and `MOUNDS`.
+  - Near-zero physics engine overhead: perfectly smooth ODE wheel contact with zero mesh faceting or glitching.
+  - Clean 2D LiDAR readings: beam reflections come strictly from actual obstacles (walls, benches, terrace railings), avoiding ground-slope false alarms.
+  - Highly realistic municipal CPS use-case with distinct, authentic Finnish cultural context.
 - **Cons**:
-  - Slopes are faceted at 0.5 m cells.
-  - The road is visual-only: the terrain beneath is grass-coloured and has the same friction.
-  - Trees and road markings carry no semantics, so the rover cannot tell road from grass (see [ARCHITECTURE.md, Known Limitations](../ARCHITECTURE.md)).
+  - Pedestrian obstacles are modeled as static objects for this baseline PoC (dynamic crowd simulation is scoped out).
 
 ## Sources
+- Helsinki Urban Planning & Pedestrian Zones (*Iso Roobertinkatu*, Punavuori)
 - [Webots R2025a Speeding Up the Simulation Guide](https://cyberbotics.com/doc/guide/speeding-up-the-simulation)
-- [Webots ElevationGrid reference](https://cyberbotics.com/doc/reference/elevationgrid)

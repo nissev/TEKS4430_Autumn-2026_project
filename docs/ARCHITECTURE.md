@@ -1,63 +1,63 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 4 Argon (Medium)
+model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 10, 2026 at 18:58
+last_updated: November 11, 2026 at 16:15
 ---
 
-# System Architecture: Roadside Rough-Terrain Trash Collection Rover
+# System Architecture: Iso-Roba Pedestrian Street Clean-Up Robot
 
 **Course**: TEKS4430 – Autonomous Cyber-Physical Systems  
+**Setting**: Finnish pedestrian walking district (inspired by *Iso Roobertinkatu*, Helsinki)  
+**Robot Platform**: KUKA `Youbot` (4-wheel Mecanum base + 5-DOF arm + parallel gripper)  
 **Frameworks**: ROS 2 Jazzy (Docker) + Webots R2025a (Host)
 
 ---
 
 ## 1. Architectural Overview
 
-The **Roadside Rough-Terrain Trash Collection Rover** is a 3-layer Autonomous Cyber-Physical System (CPS) built around an **Adept `Pioneer 3-AT` 4WD all-terrain rover** (`name "pioneer_rover"`) retrofitted with a **5-DOF manipulator arm** (`Youbot` arm extraction on a low front-bumper bracket), an **onboard front-top deck collection bin**, two **360° 2D LiDARs** (`RobotisLds01` front & rear), a **Camera with `Recognition`**, and an **IMU + 4-wheel encoders**.
+The **Iso-Roba Clean-Up Robot** is an Autonomous Cyber-Physical System (CPS) built around a standard **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`). It operates on a flat, stone-paved pedestrian street flanked by building facades and urban obstacles (benches, cafe terraces, bike racks). It uses omnidirectional mobility to align with litter items, an onboard 5-DOF arm to grasp and deposit trash into a rear-deck bin, and a 2D LiDAR to maintain clearance from obstacles.
 
 ```mermaid
 flowchart TD
-    subgraph Webots["Webots R2025a Simulator (Lightweight Roadside Arena)"]
-        Sensors["Sensors: 4x Wheel Encoders, IMU (Gyro/Accel/InertialUnit),\n360° 2D LiDAR (RobotisLds01) x2 front/rear, Camera (Recognition)"]
-        Actuators["Actuators: 4x Wheel Motors, 5-DOF Arm (arm1..arm5),\nParallel Gripper (finger::left/right)"]
+    subgraph Webots["Webots R2025a Simulator (Iso-Roba Pedestrian Arena)"]
+        Sensors["Sensors: 4x Mecanum Encoders, IMU (Gyro/Accelerometer),\n2D LiDAR (HokuyoURG04LX), Camera (with Recognition)"]
+        Actuators["Actuators: 4x Mecanum Wheel Motors (wheel1..wheel4),\n5-DOF Arm (arm1..arm5), Gripper (finger::left, finger::right)"]
     end
 
     subgraph ROS2["ROS 2 Jazzy (roadside_rover_pkg)"]
         Driver["rover_driver.py\n(Webots ROS 2 Bridge)"]
 
         subgraph Layer1["Layer 1: Sensing & Perception (perception_node.py)"]
-            CompFilter["Complementary Filter\n(4WD Odometry + IMU Yaw & Tilt)"]
-            LidarProc["360° LiDAR Sector Analyzer\n(Front / Sides / Rear Clearance)"]
-            CamRec["Trash Target Tracker\n(Camera Recognition 3D Pose -> Bearing/Range)"]
-            GPSFuture["[Scoped Out / Future]\nGPS Long-Term Waypoint Localization"]
+            OdomFilter["Odometry & Yaw Filter\n(Mecanum Odometry + Gyro Yaw)"]
+            LidarProc["2D LiDAR Sector Analyzer\n(Front / Front-Left / Front-Right / Rear)"]
+            CamRec["Litter Target Tracker\n(Camera Recognition -> Relative Bearing & Distance)"]
         end
 
         subgraph Layer2["Layer 2: Reasoning & Planning (behavior_tree_node.py)"]
-            BT["Hybrid Behavior Tree (py_trees)\nReactive Safety (Tilt & 360° Obstacle Avoidance)\n+ Deliberative Mission (Patrol -> Approach -> Pick -> Depot)"]
+            BT["Hybrid Behavior Tree (py_trees)\nReactive Safety (LiDAR Obstacle Avoidance & Emergency Stop)\n+ Deliberative Mission (Patrol Street -> Approach Litter -> Pick & Bin -> Depot)"]
         end
 
         subgraph Layer3["Layer 3: Act & Control"]
-            BasePID["Terrain-Adaptive Base PID (base_controller_node.py)\n(Heading & Standoff Distance + Tilt Speed Scaling)"]
+            BasePID["Holonomic Base PID (base_controller_node.py)\n(vx, vy, omega_z error regulation using Mecanum strafing)"]
             ArmFSM["5-State Arm Pick-and-Place Sub-FSM (arm_fsm_node.py)\n(HOME -> PRE_GRASP -> GRASP -> LIFT -> DROP_IN_BIN)"]
         end
     end
 
     Sensors --> Driver
-    Driver --> CompFilter
+    Driver --> OdomFilter
     Driver --> LidarProc
     Driver --> CamRec
 
-    CompFilter -->|"/rover/odom_filtered\n/rover/tilt_state"| BT
+    OdomFilter -->|"/rover/odom_filtered"| BT
     LidarProc -->|"/rover/obstacle_sectors"| BT
     CamRec -->|"/rover/trash_target"| BT
 
     BT -->|"Mode & Target"| BasePID
     BT -->|"Trigger Pick (/arm/pick_trigger)"| ArmFSM
     ArmFSM -->|"Pick Status (/arm/pick_status)"| BT
-    CompFilter -->|"/rover/tilt_state"| BasePID
 
-    BasePID -->|"/cmd_vel"| Driver
+    BasePID -->|"/cmd_vel (vx, vy, omega)"| Driver
     ArmFSM -->|"/arm/joint_1..5/cmd\n/arm/gripper/cmd"| Driver
     Driver --> Actuators
 ```
@@ -68,99 +68,22 @@ flowchart TD
 
 | CPS Layer | ROS 2 Node(s) | Responsibilities | Course Baseline Reference |
 | :--- | :--- | :--- | :--- |
-| **1. Sensing & Perception** | `perception_node.py` | • **Complementary Filter**: Fuses 4-wheel encoders with IMU gyro/accelerometer to correct wheel-slip yaw drift and reads roll/pitch tilt angles from `InertialUnit`.<br>• **360° LiDAR Processing**: Computes minimum safe distances across front, side, and rear sectors.<br>• **Trash Recognition**: Extracts nearest collectible trash item distance and bearing from Webots Camera recognition objects. | Assignment 2 (Sensor Fusion & IMU/Odom Drift) |
-| **2. Reasoning, Planning & Decision-Making** | `behavior_tree_node.py` | • **Reactive Layer (`py_trees`)**: Continuously checks IMU tilt thresholds (rollover prevention) and 360° LiDAR proximity (collision avoidance including reversing).<br>• **Deliberative Layer (`py_trees`)**: Coordinates patrolling, approaching detected trash, triggering the arm Sub-FSM, and (stretch goal) returning to the depot when full. | Assignment 3 (Hybrid Reactive–Deliberative Behavior Trees) |
-| **3. Act & Control** | `base_controller_node.py` (Base PID, sole `/cmd_vel` publisher)<br>`arm_fsm_node.py` (Arm Sub-FSM) | • **Terrain-Adaptive Base PID**: Closed-loop angular & linear velocity control to park at the exact arm reach standoff ($d_{\text{pick}}$), scaling max velocity inversely with IMU tilt.<br>• **Arm Pick-and-Place Sub-FSM**: 5-state sequence driving `arm1`–`arm5` and gripper fingers to grasp trash in front and deposit it into the onboard bin. | Assignment 4 (5-DOF Arm Kinematics, PID & Pick-and-Place FSM) |
+| **Layer 1: Sensing & Perception** | `perception_node.py` | • Fuses Mecanum wheel encoders and Gyro yaw.<br>• Splits 2D LiDAR into clearance sectors (`front`, `front_left`, `front_right`, `rear`).<br>• Extracts litter 3D relative bearing and distance from Camera `Recognition`. | Assignments 2 & 3 |
+| **Layer 2: Reasoning & Decision-Making** | `behavior_tree_node.py` | • High-priority reactive safety: obstacle avoidance around street furniture.<br>• Deliberative mission: sweeping patrol, target lock, triggering manipulation FSM.<br>• Abort handling and state transitions. | Assignment 3 (`py_trees`) |
+| **Layer 3: Act & Control** | `base_controller_node.py`<br>`arm_fsm_node.py` | • **Base**: Holonomic PID regulating $(v_x, v_y, \omega_z)$ to park at pick standoff distance.<br>• **Arm**: Deterministic 5-state trajectory (`HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`). | Assignment 4 (Tasks 2 & 3) |
 
 ---
 
-## 3. Hybrid Behavior Tree & Sub-FSM Structure
+## 3. Communication Topic Interfaces
 
-```mermaid
-flowchart TD
-    Root["Root [Selector]"]
-    Root --> Reactive["1. Reactive Safety [Selector]"]
-    Root --> Deliberative["2. Deliberative Mission [Selector]"]
-
-    Reactive --> TiltSeq["Tilt Recovery [Sequence]"]
-    TiltSeq --> CondTilt(["IsTiltCritical?\n(|pitch| or |roll| > θ_max)"])
-    TiltSeq --> ActTilt["RecoverFromTilt\n(Stop / Reverse Slowly)"]
-
-    Reactive --> ObsSeq["Obstacle Avoidance [Sequence]"]
-    ObsSeq --> CondObs(["IsObstacleTooClose?\n(360° LiDAR Sectors)"])
-    ObsSeq --> ActObs["AvoidObstacle\n(Steer Clear / Reverse)"]
-
-    Deliberative --> DepotSeq["Depot Return (Stretch) [Sequence]"]
-    DepotSeq --> CondFull(["IsBinFull?\n(count >= N)"])
-    DepotSeq --> ActDepot["NavigateToDepot"]
-
-    Deliberative --> CollectSeq["Trash Collection [Sequence]"]
-    CollectSeq --> CondTrash(["IsTrashDetected?"])
-    CollectSeq --> ActApproach["ApproachTrashPID\n(Terrain-Adaptive Base PID to Standoff)"]
-    CollectSeq --> ActPick["ExecuteArmSubFSM\n(HOME -> PRE_GRASP -> GRASP -> LIFT -> DROP_IN_BIN)"]
-
-    Deliberative --> ActPatrol["PatrolRoadside\n(Tilt-Scaled Forward Cruise)"]
-```
-
----
-
-> **Note**: Layer 2 planning is intentionally simple for this PoC (reactive safety + patrol/approach/pick). A real system would add higher-level mission planning (coverage/route planning, task allocation, map-based depot navigation).
-
-## 4. ROS 2 Topic Interface Summary
-
-| Topic | Message Type | Publisher | Subscriber | Description |
+| Topic Name | Message Type | Publisher Node | Subscriber Node(s) | Role |
 | :--- | :--- | :--- | :--- | :--- |
-| `/scan_front`, `/scan_rear` | `sensor_msgs/LaserScan` | `rover_driver` | `perception_node` | 360° 2D LiDAR scans (front and rear units, self-occluded sectors masked) |
-| `/imu/data_raw` | `sensor_msgs/Imu` | `rover_driver` | `perception_node` | Raw IMU gyroscope & accelerometer data |
-| `/wheel_odom_raw` | `nav_msgs/Odometry` | `rover_driver` | `perception_node` | Raw 4-wheel encoder odometry |
-| `/camera/recognized_trash` | `geometry_msgs/PointStamped` | `rover_driver` | `perception_node` | Closest trash position in robot frame (`x, y, z`) |
-| `/rover/odom_filtered` | `nav_msgs/Odometry` | `perception_node` | `behavior_tree_node` | Slip-compensated Complementary Filter pose |
-| `/rover/tilt_state` | `geometry_msgs/Vector3` | `perception_node` | `behavior_tree_node` | `x`: roll (rad), `y`: pitch (rad), `z`: tilt speed scale $[0.2, 1.0]$ |
-| `/rover/trash_target` | `geometry_msgs/Point` | `perception_node` | `behavior_tree_node` | `x`: distance (m), `y`: bearing (rad), `z`: valid flag ($1.0$ or $0.0$) |
-| `/rover/obstacle_sectors` | `std_msgs/Float32MultiArray` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Min clearance (m): front, front-left, front-right, rear |
-| `/rover/base_mode` | `std_msgs/String` | `behavior_tree_node` | `base_controller_node` | Base mode selected by the BT (`PATROL`, `APPROACH`, `AVOID`, `RECOVER`, `STOP`) |
-| `/cmd_vel` | `geometry_msgs/Twist` | `base_controller_node` | `rover_driver` | Differential-drive linear/angular velocity command |
-| `/arm/joint_1..5/cmd` | `std_msgs/Float64` | `arm_fsm_node` | `rover_driver` | Target joint angles for the 5-DOF arm |
-| `/arm/gripper/cmd` | `std_msgs/Float64` | `arm_fsm_node` | `rover_driver` | Gripper finger opening width ($0.0\text{ m}$ to $0.0245\text{ m}$) |
-| `/arm/pick_trigger` | `std_msgs/Bool` | `behavior_tree_node` | `arm_fsm_node` | Triggers the 5-state pick-and-place cycle |
-| `/arm/abort` | `std_msgs/Bool` | `behavior_tree_node` | `arm_fsm_node` | Abort current pick and stow arm to `HOME` (sent when the BT preempts `ExecuteArmSubFSM`) |
-| `/arm/pick_status` | `std_msgs/String` | `arm_fsm_node` | `behavior_tree_node` | Current FSM state (`IDLE`, `BUSY`, `SUCCESS`, `FAILED`, `ABORTED`) |
-
----
-
-## 5. Architecture Decision Records (ADRs)
-
-All key architectural choices are documented in `docs/adr/`:
-- [ADR-001: Robot Platform & Manipulation Hardware](adr/001-robot-platform-and-arm.md)
-- [ADR-002: Lightweight Simulation Environment Design](adr/002-lightweight-simulation-world.md)
-- [ADR-003: Sensing, Perception & State Estimation Pipeline](adr/003-sensing-and-perception.md)
-- [ADR-004: Hybrid Behavior Tree & Arm Sub-FSM Architecture](adr/004-hybrid-reasoning-architecture.md)
-- [ADR-005: Terrain-Adaptive Control & Grasping Reliability](adr/005-actuation-and-control.md)
-- [ADR-006: ROS 2 Package & Node Topology](adr/006-ros2-package-topology.md)
-- [ADR-007: Road/Hazard-Zone Exclusion Not Implemented (Known Safety Gap)](adr/007-road-exclusion-not-implemented.md)
-
----
-
-## 6. Known Limitations & Future Safety Architecture
-
-- **No road/hazard-zone exclusion (critical safety gap).** The rover has no semantics to distinguish the road from the verge, so nothing stops it from driving onto the carriageway. The PoC's world walls are a test-bench boundary only. Decision and future design: [ADR-007](adr/007-road-exclusion-not-implemented.md).
-- **Future layer placement (not implemented):**
-
-```mermaid
-flowchart LR
-    Sem["hazard_zone_node (geofence / road semantics)"]:::future -.->|"/rover/hazard_zone"| BT["behavior_tree_node (IsNearRoad + RetreatFromRoad, top priority)"]:::future
-    Sem -.-> Mon["Independent safety monitor (stop base)"]:::future
-    BT -.-> Base["base_controller_node (velocity clamp at boundary)"]
-    Mon -.-> Base
-    classDef future stroke-dasharray: 5 5
-```
-
-- **Simulation fidelity:** the road is visual-only, and the terrain is a coarse `ElevationGrid` ([ADR-002](adr/002-lightweight-simulation-world.md)).
-
----
-
-## Sources
-- [TEKS4430 Course Project Specification](../ASSIGNMENT.md) (`https://github.com/TEKS4430/Autumn-2026_project`)
-- [Webots R2025a Pioneer 3-AT Documentation](https://cyberbotics.com/doc/guide/pioneer-3at)
-- [Webots R2025a KUKA YouBot Documentation](https://cyberbotics.com/doc/guide/youbot)
-- [py_trees Official Documentation](https://py-trees.readthedocs.io/en/devel/)
+| `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `rover_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
+| `/scan` | `sensor_msgs/msg/LaserScan` | `rover_driver` | `perception_node` | Raw 2D LiDAR distances. |
+| `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `rover_driver` | `perception_node` | Recognized trash relative coordinates. |
+| `/rover/obstacle_sectors` | Custom / `std_msgs/msg/Float32MultiArray` | `perception_node` | `behavior_tree_node` | Minimum clearance distances per sector. |
+| `/rover/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |
+| `/rover/base_mode` | `std_msgs/msg/String` | `behavior_tree_node` | `base_controller_node` | Selected base control mode (`IDLE`, `PATROL`, `APPROACH`). |
+| `/arm/pick_trigger` | `std_msgs/msg/Bool` | `behavior_tree_node` | `arm_fsm_node` | Starts the pick-and-place cycle. |
+| `/arm/pick_status` | `std_msgs/msg/String` | `arm_fsm_node` | `behavior_tree_node` | Feedback (`BUSY`, `SUCCESS`, `FAILED`). |
+| `/arm/abort` | `std_msgs/msg/Bool` | `behavior_tree_node` | `arm_fsm_node` | Preempts pick action back to `HOME`. |

@@ -1,35 +1,36 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 4 Argon (Medium)
+model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 10, 2026 at 18:57
+last_updated: November 11, 2026 at 16:15
 ---
 
-# ADR-001: Robot Platform & Manipulation Hardware
+# ADR-001: Robot Platform & Manipulation Hardware (KUKA YouBot)
 
-- **Status**: Accepted (revised 2026-11-10: `Koala.proto` replaced by `Pioneer3at.proto` after early M1.4 PROTO inspection)
+- **Status**: Accepted (revised 2026-11-11: pivoted from custom 4WD off-road rover to native KUKA `Youbot.proto` for urban pedestrian environment)
 - **Date**: 2026-11-08
 
 ## Context
-The project requires a robot platform capable of navigating rough roadside terrain (slopes, bumps, ditches, and scattered rocks) while physically collecting trash items and storing them in an onboard bin.
+Initial design iterations focused on a rough roadside environment with steep ditch slopes, prompting the evaluation of rugged outdoor platforms (such as `Koala`, `Pioneer 3-AT`, and `SummitXlSteel`). However, composite robot assembly (mounting an arm and custom bin inside extension slots) and off-road wheel friction/tipping physics introduced high simulation complexity that detracted from core Autonomous CPS coursework goals.
 
-Indoor platforms like `TurtleBot3Burger` (tiny caster wheels) and standard `Youbot` (small Mecanum rollers) easily high-center or wedge on uneven outdoor geometry in Webots. We initially selected K-Team's 6-wheeled `Koala` (`Koala.proto`), but during the M1.4 "test early" verification we discovered that Webots R2025a's `Koala.proto` is an older **kinematic-only** PROTO: neither its chassis nor its 6 wheels contain `Physics` nodes (4 of the 6 wheels are static `Solid`s without joints). Without ODE physics on the base and wheels, the robot cannot follow 3D `ElevationGrid` slopes under gravity (so `InertialUnit` roll/pitch stays zero) and cannot stably support the dynamic 5.8 kg `Youbot` arm. We also evaluated `Clearpath Moose` (`Moose.proto`), which was rejected because its 1.14 m deck height is far too tall for the 0.46 m `Youbot` arm to reach the ground.
+Refocusing the scenario on an urban Finnish walking district (inspired by *Iso Roobertinkatu*, Helsinki) eliminates off-road terrain traversal requirements while introducing realistic municipal service robotics challenges (maneuvering through pedestrian zones, picking up litter near benches and cafe terraces).
 
 ## Decision
-We will use the **Adept `Pioneer 3-AT` 4-Wheel-Drive (4WD) All-Terrain Rover** (`Pioneer3at.proto`, $0.508 \times 0.497 \times 0.277\text{ m}$, $12\text{ kg}$ chassis, $r = 0.11\text{ m}$ outdoor tires) as the mobile base (`name "pioneer_rover"`) and extend its `extensionSlot` with:
-1. **Extracted KUKA `Youbot` 5-DOF Manipulator Arm** (`arm1`–`arm5` + parallel gripper `finger::left`, `finger::right`) mounted on a **low front-bumper bracket** (`translation 0.24 0 -0.05` relative to `extensionSlot`, placing the arm base ~0.08 m above ground so the 0.46 m arm easily reaches both the ground in front and the onboard bin behind it).
-2. **Onboard Front-Top Deck Trash Collection Bin** constructed from lightweight `Solid` wall primitives (`translation 0.02 0 0.17`, ~0.22 m behind the arm base, well within the arm's ~0.31 m backward reach when `arm1` rotates to its limit, while keeping the rear deck clear for the rear 2D LiDAR).
-3. **Two `RobotisLds01` 360° 2D LiDARs** (`lds_front` and `lds_rear`), front **`Camera` with `Recognition`**, and **`InertialUnit` + `Gyro` + `Accelerometer`**.
+We adopt the native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`):
+1. **Holonomic Base**: 4-wheel Mecanum drive allowing direct sideways translation ($v_y$) and rotation ($\omega_z$) for precise alignment with street litter.
+2. **Integrated 5-DOF Arm**: Built-in `arm1` through `arm5` with parallel gripper (`finger::left`, `finger::right`).
+3. **Rear Platform Bin**: Lightweight collection bin mounted directly on the YouBot's flat rear utility platform.
+4. **Sensor Suite**: Front 2D LiDAR (`HokuyoURG04LX`), front-facing Camera with built-in `Recognition`, 4 Mecanum wheel encoders, and IMU.
 
 ## Consequences
 - **Pros**:
-  - Native ODE physics on the 12 kg chassis and all 4 independently motorized rugged outdoor wheels (`front left wheel`, `back left wheel`, `front right wheel`, `back right wheel` + position sensors), handling the roadside `ElevationGrid` slopes and bumps realistically without tipping under the arm's weight.
-  - 100% compatibility with Assignment 4's 5-DOF arm joint naming (`arm1`–`arm5`), kinematics, and PID/FSM control logic, and Assignments 2–3's `RobotisLds01` 2D LiDAR perception.
-  - Low front-bumper arm bracket + front-top deck bin guarantees reliable reach to both ground-level trash and the onboard collection bin.
+  - Official, pre-validated Webots PROTO: no manual hierarchy composition or joint instability issues.
+  - Direct 1:1 reuse of course Assignment 4 joint names (`arm1`–`arm5`), kinematic conventions, and gripper control.
+  - Omnidirectional Mecanum drive makes parking and grasping alignment fast and accurate without complex skid-steer scrubbing.
 - **Cons**:
-  - Requires assembling the `Youbot` arm node hierarchy and front-bumper mounting bracket inside `Pioneer3at.extensionSlot` in the `.wbt` world file.
+  - Mecanum rollers require flat pavement; they cannot climb tall sidewalk curbs (the operational domain is strictly flat pedestrian walkways).
+  - 5-DOF arm has shorter reach (~0.55 m) than large industrial arms, requiring the mobile base to park within ~0.25–0.35 m of target trash.
 
 ## Sources
-- [Webots R2025a Adept Pioneer 3-AT Documentation](https://cyberbotics.com/doc/guide/pioneer-3at)
 - [Webots R2025a KUKA YouBot Documentation](https://cyberbotics.com/doc/guide/youbot)
 - Course Assignment 4 (`youbot_arm_driver.py`)
