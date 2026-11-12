@@ -19,8 +19,8 @@ Layer 1 of the CPS architecture requires observing the urban pedestrian environm
 ## Decision
 We implement `perception_node.py` combining three perception channels:
 1. **2D LiDAR Sector Processing**: The YouBot's front 2D LiDAR (`HokuyoURG04LX`) scan is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`) to guide obstacle avoidance and docking clearance.
-2. **Webots Camera with Native `Recognition`**: Uses Webots' built-in object recognition to extract 3D positions of litter targets in the camera frame, translating them into target coordinates (`/rover/trash_target`).
-3. **Mecanum Odometry + Gyro Fusion**: Fuses 4-wheel Mecanum kinematic odometry with high-frequency Gyro yaw to maintain heading stability on the flat pavement (`/rover/odom_filtered`).
+2. **Webots Camera with Native `Recognition`**: Uses Webots' built-in object recognition to extract 3D positions of litter targets in the camera frame, translating them into target coordinates (`/youbot/trash_target`).
+3. **Mecanum Odometry + Gyro Fusion**: Fuses 4-wheel Mecanum kinematic odometry with high-frequency Gyro yaw to maintain heading stability on the flat pavement (`/youbot/odom_filtered`).
    - *Note*: Pitch/roll tilt monitoring is removed because the paved pedestrian street is flat.
 
 ## Consequences

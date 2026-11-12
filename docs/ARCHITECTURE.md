@@ -26,7 +26,7 @@ flowchart TD
     end
 
     subgraph ROS2["ROS 2 Jazzy (isoroba_cleaner_pkg)"]
-        Driver["rover_driver.py\n(Webots ROS 2 Bridge)"]
+        Driver["youbot_driver.py\n(Webots ROS 2 Bridge)"]
 
         subgraph Layer1["Layer 1: Sensing & Perception (perception_node.py)"]
             OdomFilter["Odometry & Yaw Filter\n(Mecanum Odometry + Gyro Yaw)"]
@@ -49,9 +49,9 @@ flowchart TD
     Driver --> LidarProc
     Driver --> CamRec
 
-    OdomFilter -->|"/rover/odom_filtered"| BT
-    LidarProc -->|"/rover/obstacle_sectors"| BT
-    CamRec -->|"/rover/trash_target"| BT
+    OdomFilter -->|"/youbot/odom_filtered"| BT
+    LidarProc -->|"/youbot/obstacle_sectors"| BT
+    CamRec -->|"/youbot/trash_target"| BT
 
     BT -->|"Mode & Target"| BasePID
     BT -->|"Trigger Pick (/arm/pick_trigger)"| ArmFSM
@@ -78,12 +78,12 @@ flowchart TD
 
 | Topic Name | Message Type | Publisher Node | Subscriber Node(s) | Role |
 | :--- | :--- | :--- | :--- | :--- |
-| `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `rover_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
-| `/scan` | `sensor_msgs/msg/LaserScan` | `rover_driver` | `perception_node` | Raw 2D LiDAR distances. |
-| `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `rover_driver` | `perception_node` | Recognized trash relative coordinates. |
-| `/rover/obstacle_sectors` | Custom / `std_msgs/msg/Float32MultiArray` | `perception_node` | `behavior_tree_node` | Minimum clearance distances per sector. |
-| `/rover/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |
-| `/rover/base_mode` | `std_msgs/msg/String` | `behavior_tree_node` | `base_controller_node` | Selected base control mode (`IDLE`, `PATROL`, `APPROACH`). |
+| `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `youbot_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
+| `/scan_front`, `/scan_rear` | `sensor_msgs/msg/LaserScan` | `youbot_driver` | `perception_node` | Raw 2D LiDAR distances. |
+| `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `youbot_driver` | `perception_node` | Recognized trash relative coordinates. |
+| `/youbot/obstacle_sectors` | Custom / `std_msgs/msg/Float32MultiArray` | `perception_node` | `behavior_tree_node` | Minimum clearance distances per sector. |
+| `/youbot/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |
+| `/youbot/base_mode` | `std_msgs/msg/String` | `behavior_tree_node` | `base_controller_node` | Selected base control mode (`IDLE`, `PATROL`, `APPROACH`). |
 | `/arm/pick_trigger` | `std_msgs/msg/Bool` | `behavior_tree_node` | `arm_fsm_node` | Starts the pick-and-place cycle. |
 | `/arm/pick_status` | `std_msgs/msg/String` | `arm_fsm_node` | `behavior_tree_node` | Feedback (`BUSY`, `SUCCESS`, `FAILED`). |
 | `/arm/abort` | `std_msgs/msg/Bool` | `behavior_tree_node` | `arm_fsm_node` | Preempts pick action back to `HOME`. |
