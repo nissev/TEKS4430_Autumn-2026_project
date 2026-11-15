@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 11, 2026 at 16:15
+last_updated: November 12, 2026 at 18:40
 ---
 
 # System Architecture: Iso-Roba Pedestrian Street Clean-Up Robot
@@ -80,7 +80,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- |
 | `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `youbot_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
 | `/scan_front`, `/scan_rear` | `sensor_msgs/msg/LaserScan` | `youbot_driver` | `perception_node` | Raw 2D LiDAR distances. |
-| `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `youbot_driver` | `perception_node` | Recognized trash relative coordinates. |
+| `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `youbot_driver` | `perception_node` | Raw recognized object 3D poses in `camera_link` (unfiltered hardware bridge). |
 | `/youbot/obstacle_sectors` | Custom / `std_msgs/msg/Float32MultiArray` | `perception_node` | `behavior_tree_node` | Minimum clearance distances per sector. |
 | `/youbot/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |
 | `/youbot/base_mode` | `std_msgs/msg/String` | `behavior_tree_node` | `base_controller_node` | Selected base control mode (`IDLE`, `PATROL`, `APPROACH`). |

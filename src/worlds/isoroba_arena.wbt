@@ -21,17 +21,33 @@ WorldInfo {
     "KUKA youBot mobile manipulator in a realistic Finnish pedestrian walking street environment."
   ]
   title "Iso-Roba Pedestrian Street"
-  basicTimeStep 16
+  basicTimeStep 32
   contactProperties [
     ContactProperties {
+      material1 "InteriorWheelMat"
       coulombFriction [
-        1.2
+        0, 2, 0
+      ]
+      frictionRotation -0.785398 0
+      bounce 0
+      forceDependentSlip [
+        10, 0
       ]
     }
     ContactProperties {
-      material1 "youBot"
+      material1 "ExteriorWheelMat"
       coulombFriction [
-        1.5
+        0, 2, 0
+      ]
+      frictionRotation 0.785398 0
+      bounce 0
+      forceDependentSlip [
+        10, 0
+      ]
+    }
+    ContactProperties {
+      coulombFriction [
+        1.2
       ]
     }
   ]
@@ -43,6 +59,7 @@ Viewpoint {
 TexturedBackground {
 }
 TexturedBackgroundLight {
+  castShadows FALSE
 }
 Solid {
   translation 0 0 -0.05
@@ -284,8 +301,8 @@ Youbot {
         }
       ]
       fieldOfView 1.05
-      width 640
-      height 480
+      width 320
+      height 240
       recognition Recognition {
         maxRange 4
       }
@@ -294,8 +311,10 @@ Youbot {
       name "inertial_unit"
     }
     Gyro {
+      name "gyro"
     }
     Accelerometer {
+      name "accelerometer"
     }
     Solid {
       translation -0.09 0 0.05

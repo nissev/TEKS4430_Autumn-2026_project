@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 11, 2026 at 16:15
+last_updated: November 12, 2026 at 17:15
 ---
 
 # Project Task List & Milestones (`TASKS.md`)
@@ -36,16 +36,16 @@ last_updated: November 11, 2026 at 16:15
 - [x] **M1.2**: Scaffold Docker & ROS 2 Jazzy workspace (`docker-compose.yml`, `Dockerfile`, `.env.example`, and `src/isoroba_cleaner_pkg`).
 - [x] **M1.3**: Build lightweight Finnish pedestrian street Webots world (`src/worlds/isoroba_arena.wbt`): flat paved pedestrian corridor flanked by building facades, benches, bike racks, terrace fences, and `Recognition`-tagged litter items (see ADR-002).
 - [x] **M1.4**: Configure native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`) with its 5-DOF arm (`arm1`–`arm5`), 2-finger parallel gripper (`finger::left`, `finger::right`), onboard rear collection bin, dual 2D LiDARs (`lidar_front`, `lidar_rear`), Camera (with `Recognition`), and wheel encoders. Verify arm ground reach and stow/bin drop.
-- [ ] **M1.5**: Implement `youbot_driver.py` (`webots_ros2_driver` plugin):
-  - [ ] **M1.5a**: 4-wheel Mecanum holonomic drive + odometry (`/cmd_vel` linear $x, y$ + angular $z$, `/wheel_odom_raw`).
-  - [ ] **M1.5b**: Dual 2D LiDAR and IMU topics (`/scan_front`, `/scan_rear`, `/imu/data_raw`).
-  - [ ] **M1.5c**: Camera `Recognition` conversion to `/camera/recognized_trash`.
-  - [ ] **M1.5d**: Arm joint and gripper command interfaces (`/arm/joint_N/cmd`, `/arm/gripper/cmd`); verify manual teleop/arm movement.
+- [x] **M1.5**: Implement `youbot_driver.py` (`webots_ros2_driver` plugin):
+  - [x] **M1.5a**: 4-wheel Mecanum holonomic drive + odometry (`/cmd_vel` linear $x, y$ + angular $z$, `/wheel_odom_raw`).
+  - [x] **M1.5b**: Dual 2D LiDAR and IMU topics (`/scan_front`, `/scan_rear`, `/imu/data_raw`).
+  - [x] **M1.5c**: Camera `Recognition` conversion to `/camera/recognized_trash`.
+  - [x] **M1.5d**: Arm joint and gripper command interfaces (`/arm/joint_N/cmd`, `/arm/gripper/cmd`); verify manual teleop/arm movement.
 
 ### Milestone 2 (M2): Layer 1 — Sensing, Perception & State Estimation
 - [ ] **M2.1**: Implement Mecanum wheel odometry + gyro yaw filter in `perception_node.py` to publish `/youbot/odom_filtered`.
 - [ ] **M2.2**: Process 2D LiDAR scans into directional clearance sectors (`/youbot/obstacle_sectors` front, front-left, front-right, rear) for obstacle avoidance around street furniture and terrace barriers.
-- [ ] **M2.3**: Process Webots Camera `Recognition` detections into relative target bearing and distance (`/youbot/trash_target`).
+- [ ] **M2.3**: Process Webots Camera `Recognition` detections from `/camera/recognized_trash` into relative target bearing and distance (`/youbot/trash_target`), applying ground-plane height ($z \approx 0$) and manipulator reachability filtering.
 - [ ] **M2.4**: Verify telemetry output in console/logs while navigating past street furniture and detected litter.
 
 ### Milestone 3 (M3): Layer 3 — Holonomic Base PID & Arm Pick-and-Place FSM

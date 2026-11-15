@@ -1,3 +1,8 @@
 # Webots GUI layout files (auto-generated)
 *.wbproj
 .env
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+*$py.class

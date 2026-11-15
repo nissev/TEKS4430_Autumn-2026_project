@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<!--
+  youbot.urdf — Webots ROS 2 URDF configuration for KUKA YouBot in Iso-Roba arena.
+  Native device tags bridge front/rear 2D LiDARs and IMU via webots_ros2_driver.
+  The custom Python plugin handles Mecanum 4-wheel kinematics, Camera Recognition, and Arm/Gripper control.
+-->
+<robot name="youbot">
+
+  <link name="base_link"/>
+
+  <webots>
+    <!-- Front 2D LiDAR -->
+    <device reference="lidar_front" type="Lidar">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>10</updateRate>
+        <topicName>/scan_front</topicName>
+        <frameName>lidar_front_link</frameName>
+        <alwaysOn>true</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- Rear 2D LiDAR -->
+    <device reference="lidar_rear" type="Lidar">
+      <ros>
+        <enabled>true</enabled>
+        <updateRate>10</updateRate>
+        <topicName>/scan_rear</topicName>
+        <frameName>lidar_rear_link</frameName>
+        <alwaysOn>true</alwaysOn>
+      </ros>
+    </device>
+
+    <!-- IMU (InertialUnit + Gyro + Accelerometer) -->
+    <plugin type="webots_ros2_driver::Ros2IMU">
+      <enabled>true</enabled>
+      <updateRate>10</updateRate>
+      <topicName>/imu/data_raw</topicName>
+      <alwaysOn>true</alwaysOn>
+      <frameName>imu_link</frameName>
+      <inertialUnitName>inertial_unit</inertialUnitName>
+      <gyroName>gyro</gyroName>
+      <accelerometerName>accelerometer</accelerometerName>
+    </plugin>
+
+    <!-- Python Driver Plugin -->
+    <plugin type="isoroba_cleaner_pkg.youbot_driver.YouBotDriver" />
+  </webots>
+
+</robot>

@@ -21,5 +21,9 @@ setup(
     description='Iso-Roba urban pedestrian street clean-up robot',
     license='Apache-2.0',
     tests_require=['pytest'],
-    entry_points={'console_scripts': []},
+    entry_points={
+        'console_scripts': [
+            'verify_driver = isoroba_cleaner_pkg.verify_driver:main',
+        ],
+    },
 )
