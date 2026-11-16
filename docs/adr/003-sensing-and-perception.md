@@ -2,12 +2,12 @@
 author: Nisse + Antigravity
 model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 16, 2026 at 17:28
+last_updated: November 16, 2026 at 20:12
 ---
 
 # ADR-003: Sensing & Perception Pipeline
 
-- **Status**: Accepted (revised 2026-11-16: refined 2D LiDAR clearance to dedicated front/rear collision cones and lateral avoidance turn bias)
+- **Status**: Accepted (revised 2026-11-16: refined LiDAR collision cones and locked M2.2 geometric camera filtering bounds)
 - **Date**: 2026-11-08
 
 ## Context
@@ -26,7 +26,7 @@ We implement `perception_node.py` combining two active perception channels:
    - **Trigger**: Fully event-driven callbacks triggered immediately on scan arrival for minimum latency.
 2. **Webots Camera with Native `Recognition` & Target Processing**:
    - **Driver Hardware Bridge Contract**: `youbot_driver.py` acts strictly as a sensor driver. It publishes all raw camera recognition objects as `geometry_msgs/msg/PoseArray` on `/camera/recognized_trash` in `camera_link` coordinates, with orientation converted from Webots axis-angle to valid unit quaternions. The driver does NOT perform model or semantic filtering.
-   - **Perception Node Filtering & Locking**: `perception_node.py` subscribes to `/camera/recognized_trash`. It transforms poses into the robot base frame (`base_link`), filters out high-altitude or out-of-reach objects to keep only ground-level sidewalk litter ($z \approx 0$ relative to pavement, within manipulator approach reach), and publishes the closest candidate litter coordinates $(x, y)$ as `/youbot/trash_target` (`geometry_msgs/msg/Point`).
+   - **Perception Node Filtering & Locking**: `perception_node.py` subscribes to `/camera/recognized_trash`. It applies the static `camera_link` $\to$ `base_link` transform (`[0.280083, -0.005, -0.03]` m, pitch `0.0` rad), filters by ground-plane height (`z_ground = z_base + 0.095` in `[-0.05, 0.20]` m) and approach window (`x` in `[0.15, 4.0]` m, `|y| <= 2.0` m), and publishes the closest candidate (by 2D Euclidean distance `hypot(x, y)`) to `/youbot/trash_target` (`geometry_msgs/msg/Point`) only when a valid target exists (downstream nodes handle staleness/timeout).
 
 *(Note: An earlier design included a wheel odometry + IMU gyro complementary filter. This was pruned after architectural review because the cleaner robot operates purely via closed-loop visual servoing and reactive LiDAR sectors; dead-reckoning odometry had no downstream subscribers).*
 
@@ -38,6 +38,7 @@ We implement `perception_node.py` combining two active perception channels:
    - Near-zero latency target tracking via Camera `Recognition`.
 - **Cons**:
    - Mecanum wheel roller slippage causes minor longitudinal and lateral odometry drift; closed-loop camera tracking compensates for this during target approach.
+   - Because `/camera/recognized_trash` uses `PoseArray`, litter classification is purely geometric (height and approach-window bounds) with no semantic/color label; any `Recognition`-enabled Webots object whose center falls in the ground-plane window would be treated as litter. This is sufficient for the controlled Iso-Roba PoC world, though a denser environment with low `Recognition`-enabled props would require semantic labeling (e.g., `vision_msgs`).
 
 ## Sources
 - [Webots R2025a Camera Recognition Documentation](https://cyberbotics.com/doc/reference/camera#recognition)

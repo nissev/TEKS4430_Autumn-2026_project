@@ -44,7 +44,7 @@ last_updated: November 16, 2026 at 17:10
 
 ### Milestone 2 (M2): Layer 1 — Sensing & Perception
 - [x] **M2.1**: Process 2D LiDAR scans into directional clearance cones and avoidance turn bias (`/youbot/clearance/front`, `/youbot/clearance/rear`, `/youbot/clearance/recommended_turn`) for reactive obstacle avoidance around street furniture and terrace barriers.
-- [ ] **M2.2**: Process Webots Camera `Recognition` detections from `/camera/recognized_trash` into relative target bearing and distance (`/youbot/trash_target`), applying ground-plane height ($z \approx 0$) and manipulator reachability filtering.
+- [x] **M2.2**: Process Webots Camera `Recognition` detections from `/camera/recognized_trash` into relative target bearing and distance (`/youbot/trash_target`), applying ground-plane height ($z \approx 0$) and manipulator reachability filtering.
 - [ ] **M2.3**: Verify telemetry output in console/logs while navigating past street furniture and detected litter.
 
 ### Milestone 3 (M3): Layer 3 — Holonomic Base PID & Arm Pick-and-Place FSM
