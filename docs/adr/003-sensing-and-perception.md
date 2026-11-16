@@ -17,13 +17,13 @@ Layer 1 of the CPS architecture requires observing the urban pedestrian environm
 3. Wheel odometry drifts over time (especially on Mecanum rollers during lateral strafing), requiring yaw drift stabilization.
 
 ## Decision
-We implement `perception_node.py` combining three perception channels:
-1. **2D LiDAR Sector Processing**: The YouBot's front 2D LiDAR (`HokuyoURG04LX`) scan is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`) to guide obstacle avoidance and docking clearance.
+We implement `perception_node.py` combining two active perception channels:
+1. **2D LiDAR Sector Processing**: The YouBot's front 2D LiDAR (`HokuyoURG04LX`) scan is partitioned into directional clearance sectors (`front`, `front_left`, `front_right`, `rear`) to guide obstacle avoidance and docking clearance.
 2. **Webots Camera with Native `Recognition` & Target Processing**:
    - **Driver Hardware Bridge Contract**: `youbot_driver.py` acts strictly as a sensor driver. It publishes all raw camera recognition objects as `geometry_msgs/msg/PoseArray` on `/camera/recognized_trash` in `camera_link` coordinates, with orientation converted from Webots axis-angle to valid unit quaternions. The driver does NOT perform model or semantic filtering.
    - **Perception Node Filtering & Locking**: `perception_node.py` subscribes to `/camera/recognized_trash`. It transforms poses into the robot base frame (`base_link`), filters out high-altitude or out-of-reach objects to keep only ground-level sidewalk litter ($z \approx 0$ relative to pavement, within manipulator approach reach), and publishes the closest candidate litter coordinates $(x, y)$ as `/youbot/trash_target` (`geometry_msgs/msg/Point`).
-3. **Mecanum Odometry + Gyro Fusion**: Fuses 4-wheel Mecanum kinematic odometry with high-frequency Gyro yaw to maintain heading stability on the flat pavement (`/youbot/odom_filtered`).
-   - *Note*: Pitch/roll tilt monitoring is removed because the paved pedestrian street is flat.
+
+*(Note: An earlier design included a wheel odometry + IMU gyro complementary filter. This was pruned after architectural review because the cleaner robot operates purely via closed-loop visual servoing and reactive LiDAR sectors; dead-reckoning odometry had no downstream subscribers).*
 
 ## Consequences
 - **Pros**:

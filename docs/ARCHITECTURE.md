@@ -29,7 +29,6 @@ flowchart TD
         Driver["youbot_driver.py\n(Webots ROS 2 Bridge)"]
 
         subgraph Layer1["Layer 1: Sensing & Perception (perception_node.py)"]
-            OdomFilter["Odometry & Yaw Filter\n(Mecanum Odometry + Gyro Yaw)"]
             LidarProc["2D LiDAR Sector Analyzer\n(Front / Front-Left / Front-Right / Rear)"]
             CamRec["Litter Target Tracker\n(Camera Recognition -> Relative Bearing & Distance)"]
         end
@@ -45,11 +44,9 @@ flowchart TD
     end
 
     Sensors --> Driver
-    Driver --> OdomFilter
     Driver --> LidarProc
     Driver --> CamRec
 
-    OdomFilter -->|"/youbot/odom_filtered"| BT
     LidarProc -->|"/youbot/obstacle_sectors"| BT
     CamRec -->|"/youbot/trash_target"| BT
 
@@ -68,7 +65,7 @@ flowchart TD
 
 | CPS Layer | ROS 2 Node(s) | Responsibilities | Course Baseline Reference |
 | :--- | :--- | :--- | :--- |
-| **Layer 1: Sensing & Perception** | `perception_node.py` | • Fuses Mecanum wheel encoders and Gyro yaw.<br>• Splits 2D LiDAR into clearance sectors (`front`, `front_left`, `front_right`, `rear`).<br>• Extracts litter 3D relative bearing and distance from Camera `Recognition`. | Assignments 2 & 3 |
+| **Layer 1: Sensing & Perception** | `perception_node.py` | • Splits 2D LiDAR into clearance sectors (`front`, `front_left`, `front_right`, `rear`).<br>• Extracts litter 3D relative bearing and distance from Camera `Recognition`. | Assignments 2 & 3 |
 | **Layer 2: Reasoning & Decision-Making** | `behavior_tree_node.py` | • High-priority reactive safety: obstacle avoidance around street furniture.<br>• Deliberative mission: sweeping patrol, target lock, triggering manipulation FSM.<br>• Abort handling and state transitions. | Assignment 3 (`py_trees`) |
 | **Layer 3: Act & Control** | `base_controller_node.py`<br>`arm_fsm_node.py` | • **Base**: Holonomic PID regulating $(v_x, v_y, \omega_z)$ to park at pick standoff distance.<br>• **Arm**: Deterministic 5-state trajectory (`HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`). | Assignment 4 (Tasks 2 & 3) |
 

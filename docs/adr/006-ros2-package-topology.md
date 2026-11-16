@@ -16,7 +16,7 @@ The ROS 2 codebase must be easy to build, debug, and launch inside the course's 
 ## Decision
 We will organize the implementation as a **Single ROS 2 Python Package (`isoroba_cleaner_pkg`)** with modular node scripts launched via a single `cleaner.launch.py`:
 - `youbot_driver.py`: `webots_ros2_driver` plugin bridging the KUKA YouBot 4-wheel Mecanum base, 5-DOF arm, parallel gripper, dual LiDARs, Camera `Recognition`, and IMU/InertialUnit.
-- `perception_node.py`: Layer 1 — Complementary Filter (IMU + 4-wheel encoders), LiDAR sector processor, and trash target tracker.
+- `perception_node.py`: Layer 1 — 2D LiDAR sector processor and Camera trash target tracker.
 - `behavior_tree_node.py`: Layer 2 - `py_trees` reactive/deliberative tree; selects the base mode (`/youbot/base_mode`) and triggers/aborts the arm FSM.
 - `base_controller_node.py`: Layer 3 Base Control - Holonomic Base PID; the **sole `/cmd_vel` publisher** (acts as the velocity arbiter based on the BT-selected mode).
 - `arm_fsm_node.py`: Layer 3 Manipulation — 5-state Pick-and-Place Sub-FSM controlling `arm1`–`arm5` and gripper fingers.
