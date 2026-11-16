@@ -47,7 +47,7 @@ flowchart TD
     Driver --> LidarProc
     Driver --> CamRec
 
-    LidarProc -->|"/youbot/obstacle_sectors"| BT
+    LidarProc -->|"/youbot/clearance/front, rear, recommended_turn"| BT
     CamRec -->|"/youbot/trash_target"| BT
 
     BT -->|"Mode & Target"| BasePID
@@ -78,7 +78,8 @@ flowchart TD
 | `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `youbot_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
 | `/scan_front`, `/scan_rear` | `sensor_msgs/msg/LaserScan` | `youbot_driver` | `perception_node` | Raw 2D LiDAR distances. |
 | `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `youbot_driver` | `perception_node` | Raw recognized object 3D poses in `camera_link` (unfiltered hardware bridge). |
-| `/youbot/obstacle_sectors` | Custom / `std_msgs/msg/Float32MultiArray` | `perception_node` | `behavior_tree_node` | Minimum clearance distances per sector. |
+| `/youbot/clearance/front`, `/youbot/clearance/rear` | `std_msgs/msg/Float32` | `perception_node` | `behavior_tree_node` | Minimum clearance distance in front and rear collision cones (inf if clear). |
+| `/youbot/clearance/recommended_turn` | `std_msgs/msg/Float32` | `perception_node` | `behavior_tree_node` | Recommended avoidance turn bias (+1.0 left, -1.0 right). |
 | `/youbot/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |
 | `/youbot/base_mode` | `std_msgs/msg/String` | `behavior_tree_node` | `base_controller_node` | Selected base control mode (`IDLE`, `PATROL`, `APPROACH`). |
 | `/arm/pick_trigger` | `std_msgs/msg/Bool` | `behavior_tree_node` | `arm_fsm_node` | Starts the pick-and-place cycle. |

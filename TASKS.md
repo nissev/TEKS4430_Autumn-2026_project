@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 12, 2026 at 17:15
+last_updated: November 16, 2026 at 17:10
 ---
 
 # Project Task List & Milestones (`TASKS.md`)
@@ -43,7 +43,7 @@ last_updated: November 12, 2026 at 17:15
   - [x] **M1.5d**: Arm joint and gripper command interfaces (`/arm/joint_N/cmd`, `/arm/gripper/cmd`); verify manual teleop/arm movement.
 
 ### Milestone 2 (M2): Layer 1 — Sensing & Perception
-- [ ] **M2.1**: Process 2D LiDAR scans into directional clearance sectors (`/youbot/obstacle_sectors` front, front-left, front-right, rear) for obstacle avoidance around street furniture and terrace barriers.
+- [x] **M2.1**: Process 2D LiDAR scans into directional clearance cones and avoidance turn bias (`/youbot/clearance/front`, `/youbot/clearance/rear`, `/youbot/clearance/recommended_turn`) for reactive obstacle avoidance around street furniture and terrace barriers.
 - [ ] **M2.2**: Process Webots Camera `Recognition` detections from `/camera/recognized_trash` into relative target bearing and distance (`/youbot/trash_target`), applying ground-plane height ($z \approx 0$) and manipulator reachability filtering.
 - [ ] **M2.3**: Verify telemetry output in console/logs while navigating past street furniture and detected litter.
 

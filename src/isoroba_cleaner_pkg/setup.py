@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'verify_driver = isoroba_cleaner_pkg.verify_driver:main',
+            'perception_node = isoroba_cleaner_pkg.perception_node:main',
         ],
     },
 )
