@@ -45,10 +45,9 @@ last_updated: November 16, 2026 at 17:10
 ### Milestone 2 (M2): Layer 1 — Sensing & Perception
 - [x] **M2.1**: Process 2D LiDAR scans into directional clearance cones and avoidance turn bias (`/youbot/clearance/front`, `/youbot/clearance/rear`, `/youbot/clearance/recommended_turn`) for reactive obstacle avoidance around street furniture and terrace barriers.
 - [x] **M2.2**: Process Webots Camera `Recognition` detections from `/camera/recognized_trash` into relative target bearing and distance (`/youbot/trash_target`), applying ground-plane height ($z \approx 0$) and manipulator reachability filtering.
-- [ ] **M2.3**: Verify telemetry output in console/logs while navigating past street furniture and detected litter.
 
 ### Milestone 3 (M3): Layer 3 — Holonomic Base PID & Arm Pick-and-Place FSM
-- [ ] **M3.1**: Implement **Holonomic Base PID Controller** in `base_controller_node.py` (sole `/cmd_vel` publisher; mode selected by BT via `/youbot/base_mode`; regulates lateral error $e_y$, heading error $e_\theta$, and standoff distance $e_x$ to park cleanly before trash using omnidirectional strafing).
+- [x] **M3.1**: Implement **Holonomic Base PID Controller** in `base_controller_node.py` (sole `/cmd_vel` publisher; mode selected by BT via `/youbot/base_mode`; regulates lateral error $e_y$, heading error $e_\theta$, and standoff distance $e_x$ to park cleanly before trash using omnidirectional strafing).
 - [ ] **M3.2**: Calibrate 5-DOF arm joint waypoints (`HOME`, `PRE_GRASP`, `GRASP`, `LIFT`, `DROP_IN_BIN`) for the YouBot chassis and rear bin geometry.
 - [ ] **M3.3**: Implement `arm_fsm_node.py` (5-state Pick-and-Place FSM triggered via `/arm/pick_trigger` once parked; supports `/arm/abort` with stow to `HOME` and a pick timeout; gripper open/close handled inside states).
 - [ ] **M3.4**: Test physical finger grasping on flat cobblestone/pavement.

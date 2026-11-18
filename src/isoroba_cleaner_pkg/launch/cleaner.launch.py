@@ -37,10 +37,18 @@ def generate_launch_description():
         output="screen",
     )
 
+    base_controller_node = Node(
+        package="isoroba_cleaner_pkg",
+        executable="base_controller_node",
+        name="base_controller_node",
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             youbot_driver,
             perception_node,
+            base_controller_node,
             launch.actions.RegisterEventHandler(
                 event_handler=launch.event_handlers.OnProcessExit(
                     target_action=youbot_driver,
