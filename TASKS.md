@@ -48,9 +48,9 @@ last_updated: November 16, 2026 at 17:10
 
 ### Milestone 3 (M3): Layer 3 — Holonomic Base PID & Arm Pick-and-Place FSM
 - [x] **M3.1**: Implement **Holonomic Base PID Controller** in `base_controller_node.py` (sole `/cmd_vel` publisher; mode selected by BT via `/youbot/base_mode`; regulates lateral error $e_y$, heading error $e_\theta$, and standoff distance $e_x$ to park cleanly before trash using omnidirectional strafing).
-- [ ] **M3.2**: Calibrate 5-DOF arm joint waypoints (`HOME`, `PRE_GRASP`, `GRASP`, `LIFT`, `DROP_IN_BIN`) for the YouBot chassis and rear bin geometry.
-- [ ] **M3.3**: Implement `arm_fsm_node.py` (5-state Pick-and-Place FSM triggered via `/arm/pick_trigger` once parked; supports `/arm/abort` with stow to `HOME` and a pick timeout; gripper open/close handled inside states).
-- [ ] **M3.4**: Test physical finger grasping on flat cobblestone/pavement.
+- [x] **M3.2**: Calibrate 5-DOF arm joint waypoints (`HOME`, `PRE_GRASP`, `GRASP`, `GRASP_TALL`, `LIFT`, `DROP_IN_BIN`) for the YouBot chassis and rear bin geometry.
+- [x] **M3.3**: Implement `arm_fsm_node.py` (5-state Pick-and-Place FSM triggered via `/arm/pick_trigger` once parked; supports `/arm/abort` with stow to `HOME` and a pick timeout; gripper open/close handled inside states).
+- [x] **M3.4**: Test physical finger grasping on flat cobblestone/pavement.
 
 ### Milestone 4 (M4): Layer 2 — Hybrid Behavior Tree (`py_trees`) Integration
 - [ ] **M4.1**: Implement reactive safety leaves in `behavior_tree_node.py`:

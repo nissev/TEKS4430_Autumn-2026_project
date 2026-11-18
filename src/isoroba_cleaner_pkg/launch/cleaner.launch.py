@@ -44,11 +44,19 @@ def generate_launch_description():
         output="screen",
     )
 
+    arm_fsm_node = Node(
+        package="isoroba_cleaner_pkg",
+        executable="arm_fsm_node",
+        name="arm_fsm_node",
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             youbot_driver,
             perception_node,
             base_controller_node,
+            arm_fsm_node,
             launch.actions.RegisterEventHandler(
                 event_handler=launch.event_handlers.OnProcessExit(
                     target_action=youbot_driver,

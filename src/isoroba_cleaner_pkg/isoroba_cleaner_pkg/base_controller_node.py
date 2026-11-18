@@ -27,9 +27,9 @@ COMMAND_TIMEOUT_SECONDS = 0.5
 
 # Standoff geometry & parking tolerances in base_link
 TARGET_STANDOFF_X_METERS = 0.45
-TOLERANCE_X_METERS = 0.02
-TOLERANCE_Y_METERS = 0.02
-TOLERANCE_THETA_RADIANS = 0.05
+TOLERANCE_X_METERS = 0.012
+TOLERANCE_Y_METERS = 0.005
+TOLERANCE_THETA_RADIANS = 0.03
 PARKED_CYCLES_REQUIRED = 5
 
 # Holonomic PID gains (Kp, Ki, Kd), integral clamp, and output velocity limits
