@@ -138,10 +138,10 @@ class YouBotDriver:
         # ── 1. Mecanum Inverse Kinematics ─────────────────────────
         velocity_x, velocity_y, angular_velocity_z = self.target_velocity
         wheel_speeds = [
-            (velocity_x + velocity_y - KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
-            (velocity_x - velocity_y + KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
-            (velocity_x - velocity_y - KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
             (velocity_x + velocity_y + KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
+            (velocity_x - velocity_y - KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
+            (velocity_x - velocity_y + KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
+            (velocity_x + velocity_y - KINEMATIC_LEVER_ARM * angular_velocity_z) / WHEEL_RADIUS,
         ]
         scaling_factor = max(1.0, max(abs(speed) for speed in wheel_speeds) / MAX_WHEEL_SPEED)
         for motor, speed in zip(self.wheels, wheel_speeds):
@@ -161,9 +161,9 @@ class YouBotDriver:
             delta_y = (WHEEL_RADIUS / 4.0) * (
                 delta_wheel_angles[0] - delta_wheel_angles[1] - delta_wheel_angles[2] + delta_wheel_angles[3]
             )
-            # Calculate the yaw change
+            # Calculate the yaw change (CCW positive)
             delta_theta = (WHEEL_RADIUS / (4.0 * KINEMATIC_LEVER_ARM)) * (
-                -delta_wheel_angles[0] + delta_wheel_angles[1] - delta_wheel_angles[2] + delta_wheel_angles[3]
+                delta_wheel_angles[0] - delta_wheel_angles[1] + delta_wheel_angles[2] - delta_wheel_angles[3]
             )
             # Calculate average heading during a turn
             mid_yaw = self.odometry_pose[2] + delta_theta / 2.0
