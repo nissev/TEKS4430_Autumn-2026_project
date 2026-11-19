@@ -13,12 +13,12 @@ Implements M2.2 (Camera Recognition & Target Tracking):
 """
 
 import math
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Sequence, Tuple
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point, PoseArray
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, String
 
 
 # Sector angular thresholds (in radians)
@@ -39,6 +39,9 @@ MAX_GROUND_HEIGHT_METERS = 0.20
 MIN_FORWARD_RANGE_METERS = 0.15
 MAX_FORWARD_RANGE_METERS = 4.0
 MAX_LATERAL_OFFSET_METERS = 2.0
+
+# PoC mock semantic filter: replace with a real vision semantic model in a real-world deployment.
+TARGET_TRASH_MODEL_NAME = "biscuit box"
 
 
 def extract_minimum_range_in_angular_window(
@@ -102,6 +105,7 @@ def select_closest_ground_trash_target(
     min_forward_range_meters: float = MIN_FORWARD_RANGE_METERS,
     max_forward_range_meters: float = MAX_FORWARD_RANGE_METERS,
     max_lateral_offset_meters: float = MAX_LATERAL_OFFSET_METERS,
+    recognized_models: Optional[Sequence[str]] = None,
 ) -> Optional[Tuple[float, float, float]]:
     """
     Transforms camera recognition poses to base_link, filters for ground-level litter
@@ -110,7 +114,14 @@ def select_closest_ground_trash_target(
     closest_target: Optional[Tuple[float, float, float]] = None
     closest_distance_meters = float("inf")
 
-    for pose in recognized_poses:
+    for index, pose in enumerate(recognized_poses):
+        # Mock semantic class check for Webots PoC; swap for real semantic model in deployment.
+        if recognized_models is not None:
+            if index >= len(recognized_models):
+                continue
+            if recognized_models[index].strip().lower() != TARGET_TRASH_MODEL_NAME:
+                continue
+
         position = pose.position
         if not (
             math.isfinite(position.x)
@@ -178,6 +189,10 @@ class PerceptionNode(Node):
         self.recognized_trash_subscription = self.create_subscription(
             PoseArray, "/camera/recognized_trash", self._recognized_trash_callback, 10
         )
+        self.recognized_models_subscription = self.create_subscription(
+            String, "/camera/recognized_trash_models", self._recognized_models_callback, 10
+        )
+        self.latest_recognized_models: Optional[Tuple[str, ...]] = None
 
         self.get_logger().info(
             "PerceptionNode initialized. Monitoring /scan_front, /scan_rear, and /camera/recognized_trash."
@@ -200,16 +215,17 @@ class PerceptionNode(Node):
         self.front_clearance_publisher.publish(front_message)
 
         # 2. Side flank comparison for recommended avoidance steering
-        # Left side (+30° to +90°) vs Right side (-90° to -30°)
+        # Compare full left hemisphere [0°, +90°] vs right hemisphere [-90°, 0°]
+        # so obstacles inside the front cone ([-30°, +30°]) steer away from their side.
         left_side_clearance = extract_minimum_range_in_angular_window(
             scan_message,
-            minimum_angle_radians=FORWARD_CONE_HALF_ANGLE_RADIANS,
+            minimum_angle_radians=0.0,
             maximum_angle_radians=SIDE_SECTOR_OUTER_ANGLE_RADIANS,
         )
         right_side_clearance = extract_minimum_range_in_angular_window(
             scan_message,
             minimum_angle_radians=-SIDE_SECTOR_OUTER_ANGLE_RADIANS,
-            maximum_angle_radians=-FORWARD_CONE_HALF_ANGLE_RADIANS,
+            maximum_angle_radians=0.0,
         )
 
         # Positive angular z turn (+1.0) is counter-clockwise (turn left into open space).
@@ -234,12 +250,20 @@ class PerceptionNode(Node):
         rear_message.data = minimum_rear_distance
         self.rear_clearance_publisher.publish(rear_message)
 
+    def _recognized_models_callback(self, models_message: String) -> None:
+        self.latest_recognized_models = (
+            tuple(models_message.data.split(",")) if models_message.data else ()
+        )
+
     def _recognized_trash_callback(self, poses_message: PoseArray) -> None:
         """
         Transforms camera detections to base_link, filters by ground-plane height and
         approach reachability, and publishes the closest target on /youbot/trash_target.
         """
-        closest_target = select_closest_ground_trash_target(poses_message.poses)
+        closest_target = select_closest_ground_trash_target(
+            poses_message.poses,
+            recognized_models=self.latest_recognized_models,
+        )
         if closest_target is None:
             return
 

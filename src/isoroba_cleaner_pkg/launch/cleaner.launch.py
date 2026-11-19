@@ -51,12 +51,20 @@ def generate_launch_description():
         output="screen",
     )
 
+    behavior_tree_node = Node(
+        package="isoroba_cleaner_pkg",
+        executable="behavior_tree_node",
+        name="behavior_tree_node",
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             youbot_driver,
             perception_node,
             base_controller_node,
             arm_fsm_node,
+            behavior_tree_node,
             launch.actions.RegisterEventHandler(
                 event_handler=launch.event_handlers.OnProcessExit(
                     target_action=youbot_driver,

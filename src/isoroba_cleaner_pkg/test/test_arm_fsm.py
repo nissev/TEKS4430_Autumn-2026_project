@@ -10,6 +10,7 @@ from isoroba_cleaner_pkg.arm_fsm_node import (
     GRIPPER_SETTLE_CYCLES_REQUIRED,
     OVERALL_PICK_TIMEOUT_SECONDS,
     STATE_TIMEOUT_SECONDS,
+    WAYPOINT_DWELL_SECONDS,
     ArmFSMState,
     ArmPickFSM,
     PickStatus,
@@ -41,12 +42,12 @@ def test_full_happy_path_pick_and_place_cycle():
     assert fsm.state == ArmFSMState.PRE_GRASP
     assert fsm.status == PickStatus.BUSY
 
-    # PRE_GRASP -> GRASP (with 0.4 s dwell)
-    fsm.step(0.4, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    # PRE_GRASP -> GRASP (with WAYPOINT_DWELL_SECONDS dwell)
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.state == ArmFSMState.GRASP
 
-    # GRASP -> CLOSE_GRIPPER (with 0.4 s dwell)
-    fsm.step(0.4, ARM_WAYPOINTS["GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    # GRASP -> CLOSE_GRIPPER (with WAYPOINT_DWELL_SECONDS dwell)
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.state == ArmFSMState.CLOSE_GRIPPER
     assert fsm.commanded_gripper == GRIPPER_CLOSED_METERS
 
@@ -75,8 +76,8 @@ def test_full_happy_path_pick_and_place_cycle():
 def test_empty_grasp_aborts_to_home_with_failed_status():
     fsm = ArmPickFSM()
     fsm.trigger_pick()
-    fsm.step(0.4, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
-    fsm.step(0.4, ARM_WAYPOINTS["GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.state == ArmFSMState.CLOSE_GRIPPER
 
     # Fingers close all the way to 0.0 m -> missed object
@@ -93,7 +94,7 @@ def test_empty_grasp_aborts_to_home_with_failed_status():
 def test_abort_preempts_and_blocks_retrigger_until_cleared():
     fsm = ArmPickFSM()
     fsm.trigger_pick()
-    fsm.step(0.4, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.state == ArmFSMState.GRASP
 
     fsm.set_abort(True)
@@ -132,7 +133,7 @@ def test_height_aware_grasp_selection():
     fsm = ArmPickFSM()
     # Tall item (e.g. 0.08 m can at z = -0.054 m) -> GRASP_TALL
     assert fsm.trigger_pick(target_z_meters=-0.054) is True
-    fsm.step(0.4, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.state == ArmFSMState.GRASP
     assert fsm.commanded_arm == ARM_WAYPOINTS["GRASP_TALL"]
 
@@ -141,5 +142,5 @@ def test_height_aware_grasp_selection():
     fsm.step(0.1, ARM_WAYPOINTS["HOME"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     fsm.set_abort(False)
     assert fsm.trigger_pick(target_z_meters=-0.075) is True
-    fsm.step(0.4, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
+    fsm.step(WAYPOINT_DWELL_SECONDS, ARM_WAYPOINTS["PRE_GRASP"], (GRIPPER_OPEN_METERS, GRIPPER_OPEN_METERS))
     assert fsm.commanded_arm == ARM_WAYPOINTS["GRASP"]

@@ -46,7 +46,7 @@ GRIPPER_JOINT_NAMES = ("finger::left", "finger::right")
 TALL_TARGET_Z_THRESHOLD_M = -0.065
 
 ARM_WAYPOINTS: Dict[str, Tuple[float, float, float, float, float]] = {
-    "HOME": (0.0, 0.80, -1.40, -1.00, 0.0),
+    "HOME": (0.0, 0.80, -1.40, 1.00, 0.0),
     "PRE_GRASP": (0.0, -0.82, -1.08, -1.24, 0.0),
     "GRASP": (0.0, -1.12, -1.12, -0.90, 0.0),
     "GRASP_TALL": (0.0, -0.96, -1.10, -1.08, 0.0),
@@ -316,6 +316,15 @@ class ArmFSMNode(Node):
         self.fsm.command_dirty = False
 
     def _control_loop(self) -> None:
+        if (
+            self.fsm.state == ArmFSMState.IDLE
+            and self.latest_arm_positions is not None
+            and not all_arm_joints_reached(
+                self.latest_arm_positions, self.fsm.commanded_arm
+            )
+        ):
+            self.fsm.command_dirty = True
+
         previous_state = self.fsm.state
         self.fsm.step(
             CONTROL_PERIOD_SECONDS,

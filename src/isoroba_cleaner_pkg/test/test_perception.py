@@ -143,6 +143,19 @@ def test_trash_selection_picks_closest_valid_ground_target():
     assert math.isclose(target[2] + BASE_LINK_HEIGHT_ABOVE_GROUND_METERS, 0.030, abs_tol=1e-6)
 
 
+def test_trash_selection_filters_by_mock_semantic_model_name():
+    """Verify only 'biscuit box' detections are accepted when recognized_models is provided."""
+    ground_z = camera_z_for_ground_height(0.030)
+    poses = [
+        make_camera_pose(0.8, 0.1, ground_z),  # closer, but pedestrian foot -> rejected
+        make_camera_pose(1.5, -0.2, ground_z), # biscuit box -> accepted
+    ]
+    models = ("pedestrian", "biscuit box")
+    target = select_closest_ground_trash_target(poses, recognized_models=models)
+    assert target is not None
+    assert math.isclose(target[0], 1.5 + CAMERA_OFFSET_X_METERS, abs_tol=1e-6)
+
+
 if __name__ == "__main__":
     test_free_space_returns_infinity()
     test_forward_obstacle_detected()

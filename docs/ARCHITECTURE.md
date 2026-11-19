@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 3.8 Flash (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 12, 2026 at 18:40
+last_updated: November 19, 2026 at 19:30
 ---
 
 # System Architecture: Iso-Roba Pedestrian Street Clean-Up Robot
@@ -46,9 +46,12 @@ flowchart TD
     Sensors --> Driver
     Driver --> LidarProc
     Driver --> CamRec
+    Driver -->|"/wheel_odom_raw (Mecanum + IMU Yaw)"| BT
+    Driver -->|"/wheel_odom_raw (Mecanum + IMU Yaw)"| BasePID
 
     LidarProc -->|"/youbot/clearance/front, rear, recommended_turn"| BT
     CamRec -->|"/youbot/trash_target"| BT
+    CamRec -->|"/youbot/trash_target"| BasePID
 
     BT -->|"Mode & Target"| BasePID
     BT -->|"Trigger Pick (/arm/pick_trigger)"| ArmFSM
@@ -76,8 +79,10 @@ flowchart TD
 | Topic Name | Message Type | Publisher Node | Subscriber Node(s) | Role |
 | :--- | :--- | :--- | :--- | :--- |
 | `/cmd_vel` | `geometry_msgs/msg/Twist` | `base_controller_node` | `youbot_driver` | Holonomic base velocity commands ($v_x, v_y, \omega_z$). |
+| `/wheel_odom_raw` | `nav_msgs/msg/Odometry` | `youbot_driver` | `behavior_tree_node`, `base_controller_node` | Mecanum wheel odometry fused with `InertialUnit` (IMU) yaw for corridor heading/centerline patrol and box-aligned holonomic approach. |
 | `/scan_front`, `/scan_rear` | `sensor_msgs/msg/LaserScan` | `youbot_driver` | `perception_node` | Raw 2D LiDAR distances. |
 | `/camera/recognized_trash` | `geometry_msgs/msg/PoseArray` | `youbot_driver` | `perception_node` | Raw recognized object 3D poses in `camera_link` (unfiltered hardware bridge). |
+| `/camera/recognized_trash_models` | `std_msgs/msg/String` | `youbot_driver` | `perception_node` | Raw Webots `Recognition` model names corresponding to `/camera/recognized_trash` for PoC semantic filtering. |
 | `/youbot/clearance/front`, `/youbot/clearance/rear` | `std_msgs/msg/Float32` | `perception_node` | `behavior_tree_node` | Minimum clearance distance in front and rear collision cones (inf if clear). |
 | `/youbot/clearance/recommended_turn` | `std_msgs/msg/Float32` | `perception_node` | `behavior_tree_node` | Recommended avoidance turn bias (+1.0 left, -1.0 right). |
 | `/youbot/trash_target` | `geometry_msgs/msg/Point` | `perception_node` | `behavior_tree_node`, `base_controller_node` | Locked litter target $(x, y)$ in robot frame. |

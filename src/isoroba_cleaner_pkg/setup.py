@@ -27,6 +27,7 @@ setup(
             'perception_node = isoroba_cleaner_pkg.perception_node:main',
             'base_controller_node = isoroba_cleaner_pkg.base_controller_node:main',
             'arm_fsm_node = isoroba_cleaner_pkg.arm_fsm_node:main',
+            'behavior_tree_node = isoroba_cleaner_pkg.behavior_tree_node:main',
         ],
     },
 )

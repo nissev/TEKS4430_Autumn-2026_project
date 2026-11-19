@@ -13,7 +13,7 @@ from rclpy.time import Time
 from geometry_msgs.msg import Twist, Pose, PoseArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, String
 
 # Robot geometry & limits
 WHEEL_RADIUS = 0.05
@@ -31,6 +31,7 @@ ARM_LIMITS = [
 GRIPPER_LIMIT = (0.0, 0.025)
 
 ARM_NAMES = [f"arm{i}" for i in range(1, 6)]
+HOME_ARM_POSITIONS = (0.0, 0.80, -1.40, 1.00, 0.0)
 GRIPPER_NAMES = ["finger::left", "finger::right"]
 WHEEL_NAMES = [f"wheel{i}" for i in range(1, 5)]
 
@@ -74,8 +75,8 @@ class YouBotDriver:
             *(get_motor_and_sensor(self.robot, device_name, timestep_ms) for device_name in GRIPPER_NAMES)
         )
 
-        for motor in self.arm:
-            motor.setPosition(0.0)
+        for motor, home_angle in zip(self.arm, HOME_ARM_POSITIONS):
+            motor.setPosition(home_angle)
         for motor in self.grippers:
             motor.setPosition(GRIPPER_LIMIT[1])
 
@@ -84,6 +85,11 @@ class YouBotDriver:
         if self.camera:
             self.camera.enable(timestep_ms)
             self.camera.recognitionEnable(timestep_ms)
+
+        # InertialUnit for drift-free corridor yaw
+        self.inertial_unit = self.robot.getDevice("inertial_unit")
+        if self.inertial_unit:
+            self.inertial_unit.enable(timestep_ms)
 
         # ROS 2 Node & Interfaces
         try:
@@ -95,6 +101,7 @@ class YouBotDriver:
         self.node.create_subscription(Twist, "/cmd_vel", self._cmd_vel_callback, 10)
         self.odometry_pub = self.node.create_publisher(Odometry, "/wheel_odom_raw", 10)
         self.trash_pub = self.node.create_publisher(PoseArray, "/camera/recognized_trash", 10)
+        self.trash_models_pub = self.node.create_publisher(String, "/camera/recognized_trash_models", 10)
         self.joint_state_pub = self.node.create_publisher(JointState, "/joint_states", 10)
 
         for i in range(5):
@@ -165,12 +172,17 @@ class YouBotDriver:
             delta_theta = (WHEEL_RADIUS / (4.0 * KINEMATIC_LEVER_ARM)) * (
                 delta_wheel_angles[0] - delta_wheel_angles[1] + delta_wheel_angles[2] - delta_wheel_angles[3]
             )
-            # Calculate average heading during a turn
-            mid_yaw = self.odometry_pose[2] + delta_theta / 2.0
+            # Fuse InertialUnit yaw when available for drift-free heading & position integration
+            if self.inertial_unit:
+                current_yaw = float(self.inertial_unit.getRollPitchYaw()[2])
+                mid_yaw = current_yaw
+                self.odometry_pose[2] = current_yaw
+            else:
+                mid_yaw = self.odometry_pose[2] + delta_theta / 2.0
+                self.odometry_pose[2] += delta_theta
             # Map where robot is to pose
             self.odometry_pose[0] += delta_x * math.cos(mid_yaw) - delta_y * math.sin(mid_yaw)
             self.odometry_pose[1] += delta_x * math.sin(mid_yaw) + delta_y * math.cos(mid_yaw)
-            self.odometry_pose[2] += delta_theta
 
             # Create odometry msg
             odom_msg = Odometry()
@@ -186,14 +198,15 @@ class YouBotDriver:
         self.previous_wheel_positions = current_wheel_positions
 
         # ── 3. Camera Recognition ─────────────────────────────────
-        # Pure hardware bridge: forwards all raw camera-recognized objects to
-        # /camera/recognized_trash in camera_link coordinates. Classification,
-        # ground-plane filtering, and target tracking are handled by perception_node.
+        # Pure hardware bridge: forwards all raw camera-recognized objects and
+        # their raw model names to perception_node without filtering.
         if self.camera:
             detected_objects = self.camera.getRecognitionObjects() or []
             poses_msg = PoseArray()
             poses_msg.header.stamp, poses_msg.header.frame_id = stamp, "camera_link"
+            model_names = []
             for detected_object in detected_objects:
+                model_names.append((detected_object.getModel() or "").strip())
                 litter_pose = Pose()
                 litter_pose.position.x, litter_pose.position.y, litter_pose.position.z = detected_object.getPosition()
                 axis_angle_orientation = detected_object.getOrientation()
@@ -212,6 +225,9 @@ class YouBotDriver:
                 else:
                     litter_pose.orientation.w = 1.0
                 poses_msg.poses.append(litter_pose)
+            models_msg = String()
+            models_msg.data = ",".join(model_names)
+            self.trash_models_pub.publish(models_msg)
             self.trash_pub.publish(poses_msg)
 
         # ── 4. Joint State Telemetry ──────────────────────────────

@@ -15,6 +15,7 @@ from typing import Optional, Tuple
 
 import rclpy
 from geometry_msgs.msg import Point, Twist
+from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
@@ -28,14 +29,14 @@ COMMAND_TIMEOUT_SECONDS = 0.5
 # Standoff geometry & parking tolerances in base_link
 TARGET_STANDOFF_X_METERS = 0.45
 TOLERANCE_X_METERS = 0.012
-TOLERANCE_Y_METERS = 0.005
-TOLERANCE_THETA_RADIANS = 0.03
+TOLERANCE_Y_METERS = 0.05
+TOLERANCE_THETA_RADIANS = 0.065
 PARKED_CYCLES_REQUIRED = 5
 
 # Holonomic PID gains (Kp, Ki, Kd), integral clamp, and output velocity limits
 LINEAR_X_GAINS = (0.8, 0.05, 0.15)
 LINEAR_Y_GAINS = (0.9, 0.05, 0.15)
-ANGULAR_Z_GAINS = (1.2, 0.0, 0.15)
+ANGULAR_Z_GAINS = (1.2, 0.05, 0.15)
 INTEGRAL_CLAMP = 0.5
 MAX_LINEAR_X_MPS = 0.25
 MAX_LINEAR_Y_MPS = 0.20
@@ -96,11 +97,34 @@ def compute_approach_errors(
     target_x_meters: float,
     target_y_meters: float,
     standoff_x_meters: float = TARGET_STANDOFF_X_METERS,
+    current_yaw_radians: Optional[float] = None,
 ) -> Tuple[float, float, float]:
-    """Computes (error_x, error_y, error_theta) in base_link for a ground target."""
+    """
+    Computes (error_x, error_y, error_theta) in base_link for a ground target.
+    When current_yaw_radians is available and the target is close to the approach
+    corridor, regulates heading back to the street corridor axis (0 or pi) while
+    Mecanum strafing centers target_y_meters -> 0, ensuring rectangular boxes
+    (BiscuitBox) are grasped squarely across their narrow 4.2 cm width.
+    """
     error_x_meters = target_x_meters - standoff_x_meters
     error_y_meters = target_y_meters
-    error_theta_radians = math.atan2(target_y_meters, max(target_x_meters, 0.05))
+    bearing_radians = math.atan2(target_y_meters, max(target_x_meters, 0.05))
+
+    if current_yaw_radians is None or not math.isfinite(current_yaw_radians):
+        return error_x_meters, error_y_meters, bearing_radians
+
+    # Corridor axis error in [-pi/2, +pi/2] (aligns with 0 or pi street direction)
+    corridor_yaw_error = 0.5 * math.atan2(
+        math.sin(-2.0 * current_yaw_radians),
+        math.cos(-2.0 * current_yaw_radians),
+    )
+    # Keep target safely within camera FOV (±0.24 rad) while strafing, then lock to corridor yaw
+    fov_guard_limit = 0.24
+    error_theta_radians = clamp_value(
+        corridor_yaw_error,
+        bearing_radians - fov_guard_limit,
+        bearing_radians + fov_guard_limit,
+    )
     return error_x_meters, error_y_meters, error_theta_radians
 
 
@@ -120,6 +144,7 @@ class BaseControllerNode(Node):
         self.latest_target_time_seconds: Optional[float] = None
         self.latest_bt_command: Optional[Twist] = None
         self.latest_bt_command_time_seconds: Optional[float] = None
+        self.current_yaw_radians: Optional[float] = None
 
         self.cmd_vel_publisher = self.create_publisher(Twist, "/cmd_vel", 10)
         self.base_parked_publisher = self.create_publisher(Bool, "/youbot/base_parked", 10)
@@ -127,6 +152,7 @@ class BaseControllerNode(Node):
         self.create_subscription(String, "/youbot/base_mode", self._base_mode_callback, 10)
         self.create_subscription(Point, "/youbot/trash_target", self._trash_target_callback, 10)
         self.create_subscription(Twist, "/youbot/bt_cmd_vel", self._bt_cmd_vel_callback, 10)
+        self.create_subscription(Odometry, "/wheel_odom_raw", self._odom_callback, 10)
 
         self.create_timer(CONTROL_PERIOD_SECONDS, self._control_loop_callback)
         self.get_logger().info("base_controller_node initialized in IDLE mode.")
@@ -148,6 +174,8 @@ class BaseControllerNode(Node):
         if requested_mode != self.current_mode:
             self.current_mode = requested_mode
             self._reset_pid_state()
+            if requested_mode != "APPROACH":
+                self._publish(0.0, 0.0, 0.0, False)
 
     def _trash_target_callback(self, target_message: Point) -> None:
         self.latest_target = target_message
@@ -156,6 +184,10 @@ class BaseControllerNode(Node):
     def _bt_cmd_vel_callback(self, twist_message: Twist) -> None:
         self.latest_bt_command = twist_message
         self.latest_bt_command_time_seconds = self._now_seconds()
+
+    def _odom_callback(self, odom_message: Odometry) -> None:
+        orientation = odom_message.pose.pose.orientation
+        self.current_yaw_radians = 2.0 * math.atan2(orientation.z, orientation.w)
 
     def _publish(
         self,
@@ -196,7 +228,9 @@ class BaseControllerNode(Node):
                 return
 
             error_x, error_y, error_theta = compute_approach_errors(
-                self.latest_target.x, self.latest_target.y
+                self.latest_target.x,
+                self.latest_target.y,
+                current_yaw_radians=self.current_yaw_radians,
             )
             within_tolerance = (
                 abs(error_x) <= TOLERANCE_X_METERS
