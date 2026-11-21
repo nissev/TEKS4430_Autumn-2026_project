@@ -2,7 +2,8 @@
 *.wbproj
 .env
 
-# Python bytecode caches
+# Python bytecode & test caches
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/

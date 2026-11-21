@@ -1,11 +1,15 @@
 """
-arm_fsm_node.py — Layer 3 5-State Arm Pick-and-Place Sub-FSM for KUKA YouBot.
+arm_fsm_node.py — Layer 3 Arm Pick-and-Place Sub-FSM for KUKA YouBot.
 
 Implements M3.2 + M3.3:
-  - Calibrated 5-DOF arm waypoints (HOME, PRE_GRASP, GRASP, LIFT, DROP_IN_BIN)
+  - Calibrated 5-DOF arm waypoints (HOME, PRE_GRASP, GRASP, GRASP_TALL, LIFT, DROP_IN_BIN)
     and gripper targets (GRIPPER_OPEN, GRIPPER_CLOSED) targeting 0.45 m standoff
     and the rear collection_bin (x = -0.09 m, y = 0.0 m).
-  - Subscribes to /arm/pick_trigger (Bool), /arm/abort (Bool), /joint_states (JointState).
+  - Deterministic 8-state FSM (IDLE, PRE_GRASP, GRASP, CLOSE_GRIPPER, LIFT,
+    DROP_IN_BIN, RELEASE_GRIPPER, RETURN_HOME) stepping through the 5 pick-and-place
+    kinematic stages with closed-loop joint tolerance and gripper stall checks.
+  - Subscribes to /arm/pick_trigger (Bool), /arm/abort (Bool), /joint_states (JointState),
+    and /youbot/trash_target (Point).
   - Publishes /arm/joint_1..5/cmd (Float64), /arm/gripper/cmd (Float64),
     and /arm/pick_status (String: IDLE, BUSY, SUCCESS, FAILED) at 10 Hz.
 """

@@ -1,8 +1,8 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 3.8 Flash (Medium)
+model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:55
-last_updated: November 11, 2026 at 16:15
+last_updated: November 21, 2026 at 15:05
 ---
 
 # Iso-Roba Urban Pedestrian Clean-Up Robot (KUKA YouBot)
@@ -15,12 +15,12 @@ last_updated: November 11, 2026 at 16:15
 
 ## 1. Project Concept
 
-An autonomous mobile manipulation clean-up robot based on the **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`), equipped with a 4-wheel Mecanum omnidirectional base, a **5-DOF manipulator arm** (`arm1`–`arm5`), a 2-finger parallel gripper, and an **onboard rear platform collection bin**. The robot is designed to patrol flat paved pedestrian zones (such as Helsinki's *Iso Roobertinkatu*), detect litter (cups, cans, snack packaging), navigate around street obstacles (benches, cafe terraces, bike racks), pick up litter with its arm, and deposit it into the onboard bin.
+An autonomous mobile manipulation clean-up robot based on the **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`), equipped with a 4-wheel Mecanum omnidirectional base, a **5-DOF manipulator arm** (`arm1`–`arm5`), a 2-finger parallel gripper, dual 2D LiDARs (`lidar_front`, `lidar_rear`), an IMU (`InertialUnit`), and an **onboard rear platform collection bin**. The robot is designed to patrol flat paved pedestrian zones (such as Helsinki's *Iso Roobertinkatu*), detect litter (`BiscuitBox` packaging), navigate around street obstacles (benches, cafe terrace fences, public bins, static pedestrians), pick up litter with its arm, and deposit it into the onboard bin.
 
 The system implements the three core CPS architectural layers:
-1. **Sensing & Perception (`perception_node.py`)**: Processes **2D LiDAR** clearance sectors around street furniture and uses **Webots Camera `Recognition`** to detect 3D relative positions of sidewalk litter.
-2. **Reasoning, Planning & Decision-Making (`behavior_tree_node.py`)**: A hybrid reactive–deliberative **Behavior Tree (`py_trees`)** that prioritizes immediate collision avoidance (benches, terrace railings, static pedestrians) over deliberative corridor patrolling, litter approach, and arm pick-and-place execution.
-3. **Act & Control (`base_controller_node.py` & `arm_fsm_node.py`)**: A **Holonomic Base PID Controller** that leverages omnidirectional strafing ($v_x, v_y, \omega_z$) to quickly align with target litter, coupled with a **5-State Arm Pick-and-Place Sub-FSM** (`HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`).
+1. **Sensing & Perception (`perception_node.py`)**: Processes **dual 2D LiDAR** front/rear collision cones (`[-30°, +30°]`) and lateral hemisphere steering bias (`[0°, +90°]` vs. `[-90°, 0°]`), and filters **Webots Camera `Recognition`** objects into 3D relative positions of sidewalk litter in `base_link`.
+2. **Reasoning, Planning & Decision-Making (`behavior_tree_node.py`)**: A hybrid reactive–deliberative **Behavior Tree (`py_trees`)** that prioritizes immediate collision avoidance (with arm self-occlusion filtering and pick preemption) over deliberative corridor patrolling, litter approach, and arm pick-and-place execution.
+3. **Act & Control (`base_controller_node.py` & `arm_fsm_node.py`)**: A **Holonomic Base PID Controller** that leverages omnidirectional strafing ($v_x, v_y, \omega_z$) and IMU-fused corridor heading to align at the `0.45 m` pick standoff, coupled with an **Arm Pick-and-Place Sub-FSM** (8 FSM states stepping through 5 kinematic stages: `HOME` $\rightarrow$ `PRE_GRASP` $\rightarrow$ `GRASP` $\rightarrow$ `LIFT` $\rightarrow$ `DROP_IN_BIN`).
 
 ---
 
@@ -74,8 +74,8 @@ ros2 launch isoroba_cleaner_pkg cleaner.launch.py
 
 | Milestone | Description | Status |
 | :---: | :--- | :---: |
-| **M1** | Architecture, Docker Setup & Iso-Roba World Setup | 🔄 In Progress (`M1.1`–`M1.2` Done) |
-| **M2** | Layer 1: Sensing, Perception & State Estimation | ⏳ Pending |
-| **M3** | Layer 3: Holonomic Base PID & Arm Pick-and-Place FSM | ⏳ Pending |
-| **M4** | Layer 2: Hybrid Behavior Tree (`py_trees`) | ⏳ Pending |
+| **M1** | Architecture, Docker Setup & Iso-Roba World Setup | ✅ Done (`M1.1`–`M1.5`) |
+| **M2** | Layer 1: Sensing, Perception & State Estimation | ✅ Done (`M2.1`–`M2.2`) |
+| **M3** | Layer 3: Holonomic Base PID & Arm Pick-and-Place FSM | ✅ Done (`M3.1`–`M3.4`) |
+| **M4** | Layer 2: Hybrid Behavior Tree (`py_trees`) | ✅ Core Done (`M4.1`–`M4.2`; `M4.3` Stretch Pending) |
 | **M5** | Verification, Presentation & Part B Reflection | ⏳ Pending |

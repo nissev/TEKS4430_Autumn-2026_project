@@ -164,4 +164,5 @@ if __name__ == "__main__":
     test_trash_selection_returns_none_when_empty()
     test_trash_selection_filters_elevated_and_out_of_range_objects()
     test_trash_selection_picks_closest_valid_ground_target()
+    test_trash_selection_filters_by_mock_semantic_model_name()
     print("All unit tests passed successfully!")

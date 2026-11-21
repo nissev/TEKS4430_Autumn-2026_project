@@ -31,7 +31,7 @@
       </ros>
     </device>
 
-    <!-- IMU (InertialUnit + Gyro + Accelerometer) -->
+    <!-- IMU (InertialUnit + Gyro + Accelerometer; exposed on /imu/data_raw for RViz/rqt telemetry, while YouBotDriver reads inertial_unit directly for /wheel_odom_raw yaw fusion) -->
     <plugin type="webots_ros2_driver::Ros2IMU">
       <enabled>true</enabled>
       <updateRate>10</updateRate>

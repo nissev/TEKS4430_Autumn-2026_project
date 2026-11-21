@@ -200,8 +200,8 @@ class PerceptionNode(Node):
 
     def _front_scan_callback(self, scan_message: LaserScan) -> None:
         """
-        Evaluates forward collision cone ([-30°, +30°]) and compares lateral flank clearances
-        ([+30°, +90°] vs [-90°, -30°]) to recommend avoidance turn direction.
+        Evaluates forward collision cone ([-30°, +30°]) and compares lateral hemisphere
+        clearances ([0°, +90°] vs [-90°, 0°]) to recommend avoidance turn direction.
         """
         # 1. Forward cone clearance
         minimum_front_distance = extract_minimum_range_in_angular_window(

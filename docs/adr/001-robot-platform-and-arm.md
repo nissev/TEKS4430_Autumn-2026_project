@@ -1,8 +1,8 @@
 ---
 author: Nisse + Antigravity
-model: Gemini 3.8 Flash (Medium)
+model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:38
-last_updated: November 11, 2026 at 16:15
+last_updated: November 21, 2026 at 15:05
 ---
 
 # ADR-001: Robot Platform & Manipulation Hardware (KUKA YouBot)
@@ -19,8 +19,8 @@ Refocusing the scenario on an urban Finnish walking district (inspired by *Iso R
 We adopt the native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`):
 1. **Holonomic Base**: 4-wheel Mecanum drive allowing direct sideways translation ($v_y$) and rotation ($\omega_z$) for precise alignment with street litter.
 2. **Integrated 5-DOF Arm**: Built-in `arm1` through `arm5` with parallel gripper (`finger::left`, `finger::right`).
-3. **Rear Platform Bin**: Lightweight collection bin mounted directly on the YouBot's flat rear utility platform.
-4. **Sensor Suite**: Front 2D LiDAR (`HokuyoURG04LX`), front-facing Camera with built-in `Recognition`, 4 Mecanum wheel encoders, and IMU.
+3. **Rear Platform Bin**: Lightweight collection bin (`collection_bin` at `x = -0.09 m`) mounted directly on the YouBot's flat rear utility platform.
+4. **Sensor Suite**: Dual 2D LiDARs (`lidar_front` and `lidar_rear`, `HokuyoUrg04lx`), front-facing Camera with built-in `Recognition`, 4 Mecanum wheel encoders, and IMU (`InertialUnit` + `Gyro` + `Accelerometer`).
 
 ## Consequences
 - **Pros**:
@@ -29,7 +29,7 @@ We adopt the native **KUKA `Youbot`** (`Youbot.proto`, `name "youbot"`):
   - Omnidirectional Mecanum drive makes parking and grasping alignment fast and accurate without complex skid-steer scrubbing.
 - **Cons**:
   - Mecanum rollers require flat pavement; they cannot climb tall sidewalk curbs (the operational domain is strictly flat pedestrian walkways).
-  - 5-DOF arm has shorter reach (~0.55 m) than large industrial arms, requiring the mobile base to park within ~0.25–0.35 m of target trash.
+  - 5-DOF arm has shorter reach (~0.55 m) than large industrial arms, requiring the mobile base to park at a calibrated `0.45 m` `base_link` standoff (~0.17 m from the front camera/bumper) before target trash.
 
 ## Sources
 - [Webots R2025a KUKA YouBot Documentation](https://cyberbotics.com/doc/guide/youbot)

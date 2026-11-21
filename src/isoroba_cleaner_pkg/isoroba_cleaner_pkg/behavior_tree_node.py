@@ -5,26 +5,29 @@ Implements M4.1 (Reactive Safety Leaves & Preemption):
   - Centralized RobotStateInterface & BehaviorTreeNode (10 Hz tick) managing ROS 2
     subscriptions (/youbot/clearance/front, /youbot/clearance/rear,
     /youbot/clearance/recommended_turn, /youbot/trash_target, /youbot/base_parked,
-    /arm/pick_status) and publishers (/youbot/base_mode, /youbot/bt_cmd_vel,
-    /arm/pick_trigger, /arm/abort).
-  - IsObstacleTooClose: checks front clearance (< 0.55 m); while /arm/pick_status
-    is BUSY, filters near-field self-arm reflections (< 0.25 m) while reacting to
-    external hazards in [0.25 m, 0.55 m) or rear clearance (< 0.35 m).
+    /arm/pick_status, /wheel_odom_raw) and publishers (/youbot/base_mode,
+    /youbot/bt_cmd_vel, /arm/pick_trigger, /arm/abort).
+  - IsObstacleTooClose: checks front clearance (< 0.55 m, with 0.75 m exit
+    hysteresis); while /arm/pick_status is BUSY, filters near-field self-arm
+    reflections (< 0.40 m) while reacting to external hazards in [0.40 m, 0.55 m)
+    or rear clearance (< 0.35 m).
   - AvoidObstacle: publishes /youbot/base_mode="AVOID" and /arm/abort=True;
-    executes two-stage evasion (turn in place via recommended_turn at 0.60 rad/s
-    when front < 0.55 m; reverses slowly at -0.12 m/s while turning when critically
-    close, front < 0.35 m, and rear > 0.40 m); publishes /arm/abort=False on
-    terminate() to unlatch arm_fsm_node.
+    executes two-stage evasion (turns at 0.60 rad/s and Mecanum-strafes at
+    0.14 m/s via recommended_turn when front < 0.75 m; reverses slowly at
+    -0.12 m/s while turning and strafing when critically close, front < 0.35 m,
+    and rear > 0.40 m); publishes /arm/abort=False on terminate() to unlatch
+    arm_fsm_node.
 
 Implements M4.2 (Deliberative Mission Leaves):
   - DetectAndApproachTrash: verifies fresh /youbot/trash_target (<= 0.5 s) and
     no active post-failure cooldown; drives via Holonomic Base PID (base_mode="APPROACH")
-    until /youbot/base_parked is True (or fails on target loss / 15.0 s timeout).
-  - ExecuteArmSubFSM: holds base in IDLE, triggers /arm/pick_trigger=True, performs
-    a two-phase handshake waiting for /arm/pick_status=="BUSY" (up to 1.0 s) and
-    then completion ("SUCCESS" or "FAILED" with a 3.0 s retry cooldown).
+    until /youbot/base_parked is True (or fails on target loss / 60.0 s timeout).
+  - ExecuteArmSubFSM: holds base in IDLE for 0.6 s settle dwell, triggers
+    /arm/pick_trigger=True, performs a two-phase handshake waiting for
+    /arm/pick_status=="BUSY" (up to 1.0 s) and then completion ("SUCCESS" or
+    "FAILED" with a 3.0 s retry cooldown).
   - PatrolStreet: default sweeping corridor navigation (base_mode="PATROL",
-    velocity_x=0.22 m/s).
+    velocity_x=0.22 m/s with IMU-fused corridor heading and centerline regulation).
 """
 
 from dataclasses import dataclass
