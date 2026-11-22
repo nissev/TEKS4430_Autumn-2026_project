@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:55
-last_updated: November 21, 2026 at 15:05
+last_updated: November 22, 2026 at 19:15
 ---
 
 # Iso-Roba Urban Pedestrian Clean-Up Robot (KUKA YouBot)
@@ -29,6 +29,7 @@ The system implements the three core CPS architectural layers:
 - **[Course Assignment Specification (`ASSIGNMENT.md`)](ASSIGNMENT.md)**
 - **[Project Task List & Milestones (`TASKS.md`)](TASKS.md)**
 - **[System Architecture & Diagrams (`docs/ARCHITECTURE.md`)](docs/ARCHITECTURE.md)**
+- **[Presentation Slides (`slides/index.html`)](slides/index.html)**: Interactive Reveal.js presentation covering CPS architecture, ADRs, Part B AI reporting & reflection, and 1-click PDF export.
 - **Architecture Decision Records (`docs/adr/`)**:
   - [ADR-001: Robot Platform & Manipulation Hardware (KUKA YouBot)](docs/adr/001-robot-platform-and-arm.md)
   - [ADR-002: Lightweight Simulation World (Iso-Roba Pedestrian Street)](docs/adr/002-lightweight-simulation-world.md)
@@ -78,4 +79,4 @@ ros2 launch isoroba_cleaner_pkg cleaner.launch.py
 | **M2** | Layer 1: Sensing, Perception & State Estimation | ✅ Done (`M2.1`–`M2.2`) |
 | **M3** | Layer 3: Holonomic Base PID & Arm Pick-and-Place FSM | ✅ Done (`M3.1`–`M3.4`) |
 | **M4** | Layer 2: Hybrid Behavior Tree (`py_trees`) | ✅ Core Done (`M4.1`–`M4.2`; `M4.3` Stretch Pending) |
-| **M5** | Verification, Presentation & Part B Reflection | ⏳ Pending |
+| **M5** | Verification, Presentation & Part B Reflection | ✅ Done (`M5.1`–`M5.4`) |

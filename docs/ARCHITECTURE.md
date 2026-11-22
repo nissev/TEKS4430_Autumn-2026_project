@@ -2,7 +2,7 @@
 author: Nisse + Antigravity
 model: Gemini 4 Argon (Medium)
 created: November 8, 2026 at 11:37
-last_updated: November 21, 2026 at 15:05
+last_updated: November 22, 2026 at 19:15
 ---
 
 # System Architecture: Iso-Roba Pedestrian Street Clean-Up Robot
