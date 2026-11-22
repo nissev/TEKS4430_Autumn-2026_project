@@ -63,7 +63,7 @@ last_updated: November 19, 2026 at 19:30
 - [ ] **M4.3** *(Stretch Goal)*: Add `IsBinFull` + `ReturnToDepot` branch to return to the depot coordinates after collecting $N$ items.
 
 ### Milestone 5 (M5): Verification, Presentation & Final Submission
-- [ ] **M5.1**: End-to-end mission verification in Webots + telemetry log capture.
+- [x] **M5.1**: End-to-end mission verification in Webots + telemetry log capture.
 - [ ] **M5.2**: Create presentation slides covering architecture, ADRs (including the architectural pivot from rough terrain to Iso-Roba pedestrian YouBot), verification, and Part B self-reflection.
 - [ ] **M5.3**: Record video presentation demonstrating the system and explaining Part A & Part B.
 - [ ] **M5.4**: Part B deliverables: AI-tool usage reporting and self-reflection on architectural decision-making and learning.

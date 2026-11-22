@@ -7,3 +7,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# Third-party vendor bundles (loaded via CDN in slides/index.html)
+slides/vendor/*
+!slides/vendor/slide_images.js
+!slides/vendor/.gitkeep

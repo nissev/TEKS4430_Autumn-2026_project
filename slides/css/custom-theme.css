@@ -1,0 +1,711 @@
+/* ==========================================================================
+   TEKS4430 – Autonomous Cyber-Physical Systems (Autumn 2026)
+   Clean Light & Nordic Green Sustainability Theme (Screen + PDF Export Ready)
+   ========================================================================== */
+
+:root {
+  /* Crisp, Editorial Light Surfaces */
+  --bg-primary: #f7faf8;
+  --bg-card: #ffffff;
+  --bg-card-alt: #eef5f0;
+  --border-subtle: #d5e3da;
+  --text-main: #182820;
+  --text-secondary: #334e40;
+  --text-muted: #5c7567;
+
+  /* Clean Sustainability & CPS Layer Accents */
+  --accent-primary: #15803d;  /* Deep Forest Green */
+  --accent-cyan: #0f766e;     /* Layer 1: Sensing & Perception (Nordic Teal) */
+  --accent-purple: #2e7d32;   /* Layer 2: Reasoning & Planning (Botanical Green) */
+  --accent-emerald: #166534;  /* Layer 3: Act & Control (Pine Green) */
+  --accent-amber: #b45309;    /* ADRs / Pivot (Warm Ochre) */
+  --accent-rose: #be123c;     /* Safety / Preemption */
+}
+
+/* Base Reveal viewport */
+.reveal-viewport {
+  background-color: var(--bg-primary);
+}
+
+.reveal {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 25px;
+  color: var(--text-main);
+}
+
+/* Slide sizing & left-aligned engineering layout */
+.reveal .slides {
+  text-align: left;
+}
+
+.reveal .slides section {
+  padding: 20px 32px;
+  box-sizing: border-box;
+}
+
+/* Center alignment modifier for title / divider slides */
+.reveal .slides section.center-slide {
+  text-align: center;
+}
+
+/* ==========================================================================
+   Hero Split Title Slide Layout
+   ========================================================================== */
+.reveal .slides section.hero-slide {
+  height: 100%;
+  display: flex !important;
+  align-items: center;
+  padding: 28px 40px;
+}
+
+.hero-layout {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 44px;
+  align-items: center;
+  width: 100%;
+}
+
+.hero-content {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-content .badge {
+  margin-bottom: 18px;
+}
+
+.hero-content h1 {
+  font-size: 2.35em;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: #0c351e;
+  margin: 0 0 18px 0;
+}
+
+.hero-content .hero-subtitle {
+  font-size: 1.08em;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0;
+  padding-left: 16px;
+  border-left: 4px solid var(--accent-primary);
+}
+
+.hero-visual {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, #e6f4ea 0%, #d1fae5 100%);
+  border: 1px solid #b7e1c4;
+  border-radius: 20px;
+  padding: 12px;
+  box-sizing: border-box;
+  box-shadow: 0 18px 40px rgba(15, 61, 35, 0.12);
+}
+
+.hero-visual img {
+  display: block;
+  width: 100%;
+  height: 440px;
+  object-fit: cover;
+  /* Focuses on the YouBot on the left and crops out the pedestrian legs on the right edge */
+  object-position: 18% 65%;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 61, 35, 0.12);
+  filter: brightness(1.12) contrast(1.04);
+  margin: 0 !important;
+}
+
+/* Typography */
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.22;
+  margin: 0 0 0.45em 0;
+  text-transform: none;
+  color: var(--text-main);
+}
+
+.reveal h1 {
+  font-size: 2.0em;
+  color: #0f3d23;
+}
+
+.reveal h2 {
+  font-size: 1.38em;
+  color: #0f3d23;
+  border-bottom: 2px solid var(--border-subtle);
+  padding-bottom: 0.25em;
+  margin-bottom: 0.65em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reveal h3 {
+  font-size: 1.0em;
+  color: var(--accent-primary);
+  margin-bottom: 0.35em;
+}
+
+.reveal p,
+.reveal li {
+  font-size: 0.84em;
+  line-height: 1.48;
+  color: var(--text-secondary);
+}
+
+.reveal ul,
+.reveal ol {
+  margin: 0 0 0.4em 1.2em;
+}
+
+.reveal li {
+  margin-bottom: 0.3em;
+}
+
+.reveal strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.reveal a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+/* Inline code & code blocks */
+.reveal code {
+  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  background: #e6f0ea;
+  color: #115e38;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.reveal pre {
+  width: 100%;
+  margin: 0.45em 0;
+  box-shadow: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: #18241e;
+}
+
+.reveal pre code {
+  background: transparent;
+  color: #f1f5f9;
+  padding: 12px 16px;
+  font-size: 0.7em;
+  line-height: 1.42;
+  max-height: 400px;
+}
+
+/* ==========================================================================
+   Reusable Layout Utilities (Grid & Cards)
+   ========================================================================== */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.grid-2-1 {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-top: 4px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 15px 18px;
+  box-shadow: 0 2px 6px rgba(15, 61, 35, 0.05);
+}
+
+.card.layer-1 {
+  border-top-color: var(--accent-cyan);
+}
+
+.card.layer-1 h3 {
+  color: var(--accent-cyan);
+}
+
+.card.layer-2 {
+  border-top-color: var(--accent-purple);
+}
+
+.card.layer-2 h3 {
+  color: var(--accent-purple);
+}
+
+.card.layer-3 {
+  border-top-color: var(--accent-emerald);
+}
+
+.card.layer-3 h3 {
+  color: var(--accent-emerald);
+}
+
+.card.warn {
+  border-top-color: var(--accent-amber);
+}
+
+.card.warn h3 {
+  color: var(--accent-amber);
+}
+
+.card.danger {
+  border-top-color: var(--accent-rose);
+}
+
+/* Badges / Tags */
+.badge {
+  display: inline-block;
+  font-size: 0.5em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #e6f4ea;
+  color: #166534;
+  border: 1px solid #b7e1c4;
+  vertical-align: middle;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge.layer-1 {
+  background: #e6f6f4;
+  color: #0f766e;
+  border-color: #99dfda;
+}
+
+.badge.layer-2 {
+  background: #eaf5e6;
+  color: #2e7d32;
+  border-color: #b5dca8;
+}
+
+.badge.layer-3 {
+  background: #e6f4ea;
+  color: #166534;
+  border-color: #b7e1c4;
+}
+
+.badge.adr {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+/* Comparison / Split Layout for Cards & Media */
+.split-compare-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: stretch;
+  height: calc(100% - 70px);
+}
+
+.compare-cards-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.compare-cards-col .card {
+  padding: 14px 18px;
+  box-shadow: 0 4px 14px rgba(15, 61, 35, 0.06);
+}
+
+.compare-cards-col .card h3 {
+  margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+.compare-cards-col .card ul {
+  margin: 0 0 0 1.1em;
+}
+
+.compare-cards-col .card li {
+  margin-bottom: 0.25em;
+  font-size: 0.8em;
+}
+
+.compare-media-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 10px;
+  box-sizing: border-box;
+  box-shadow: 0 10px 24px rgba(15, 61, 35, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-media-col img {
+  width: 100%;
+  height: 100%;
+  max-height: 470px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 10px;
+  display: block;
+  border: 1px solid rgba(15, 61, 35, 0.08);
+  margin: 0 !important;
+}
+
+.compare-media-caption {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Automatic clean framing when an image is placed inside .media-placeholder or .media-frame */
+.media-placeholder:has(img),
+.media-frame {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 10px 28px rgba(15, 61, 35, 0.10);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  min-height: unset;
+  max-width: 780px;
+  overflow: hidden;
+}
+
+.media-placeholder img,
+.media-frame img {
+  display: block;
+  width: 100%;
+  max-height: 410px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 10px;
+  margin: 0 !important;
+}
+
+/* Tables */
+.reveal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72em;
+  margin-top: 0.35em;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reveal table th {
+  background: var(--bg-card-alt);
+  color: #0f3d23;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-bottom: 2px solid var(--border-subtle);
+  text-align: left;
+}
+
+.reveal table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.reveal table tr:nth-child(even) td {
+  background: #fafcfb;
+}
+
+/* Mermaid diagram container */
+.mermaid-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 20px;
+  text-align: center;
+  margin: 0.2em 0 0.4em 0;
+  box-shadow: 0 4px 14px rgba(15, 61, 35, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mermaid-box pre.mermaid {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  width: 100%;
+}
+
+.mermaid-box svg {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 490px;
+}
+
+/* Dedicated sizing for Slide 3 architecture graph */
+.mermaid-box.arch-graph {
+  min-height: 420px;
+  max-height: 470px;
+  padding: 10px 18px;
+}
+
+.mermaid-box.arch-graph svg {
+  max-height: 450px;
+  min-height: 380px;
+}
+
+/* Dedicated sizing for Slide 5 Behavior Tree graph in 2-column layout */
+.mermaid-box.bt-graph {
+  min-height: 420px;
+  max-height: 470px;
+}
+
+.mermaid-box.bt-graph svg {
+  max-height: 450px;
+}
+
+/* Demo Slide Banner / Layout */
+.demo-slide-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: calc(100% - 90px);
+  gap: 24px;
+}
+
+.demo-badge-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+  padding: 8px 22px;
+  border-radius: 999px;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.demo-pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.demo-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 1100px;
+  text-align: left;
+}
+
+.demo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(15, 61, 35, 0.06);
+}
+
+.demo-card h3 {
+  font-size: 0.95em;
+  margin-bottom: 8px;
+  color: var(--accent-primary);
+}
+
+.demo-card p {
+  font-size: 0.8em;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.slide-meta {
+  margin-top: 14px;
+  font-size: 0.7em;
+  color: var(--text-muted);
+}
+
+/* Controls & Progress Bar */
+.reveal .progress {
+  height: 4px;
+  color: var(--accent-primary);
+}
+
+.reveal .controls {
+  color: var(--accent-primary);
+  right: 14px !important;
+  bottom: 38px !important; /* Raised above the slide number box */
+}
+
+.reveal .slide-number {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  right: 14px !important;
+  bottom: 12px !important;
+  box-shadow: 0 2px 6px rgba(15, 61, 35, 0.06);
+}
+
+/* ==========================================================================
+   Print & PDF Export Styling (?print-pdf or print button)
+   ========================================================================== */
+.pdf-export-btn {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 61, 35, 0.08);
+  transition: all 0.15s ease;
+}
+
+.pdf-export-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.22);
+}
+
+/* Hide the export button completely while generating the PDF and during print */
+body.exporting-pdf .pdf-export-btn,
+body.exporting-pdf .reveal .controls,
+body.exporting-pdf .reveal .progress,
+body.exporting-pdf .reveal .slide-number,
+@media print {
+  .pdf-export-btn,
+  .reveal .controls,
+  .reveal .progress,
+  .reveal .slide-number {
+    display: none !important;
+  }
+}
+
+body.exporting-pdf .pdf-export-btn {
+  display: none !important;
+}
+
+/* Reveal.js native PDF page formatting */
+.reveal .slides .pdf-page {
+  background: var(--bg-primary) !important;
+}
+
+.reveal .slides .pdf-page section {
+  background: var(--bg-primary) !important;
+  color: var(--text-main) !important;
+  box-sizing: border-box !important;
+  padding: 36px 48px !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.reveal .slides .pdf-page .card {
+  background: #ffffff !important;
+  box-shadow: none !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.reveal .slides .pdf-page .mermaid-box {
+  background: #ffffff !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: none !important;
+  max-height: 480px !important;
+}
+
+.reveal .slides .pdf-page .mermaid-box svg {
+  max-height: 460px !important;
+  width: 100% !important;
+}
+
+.reveal .slides .pdf-page .hero-visual img {
+  height: 380px !important;
+  max-height: 380px !important;
+}
+
+.reveal .slides .pdf-page .compare-media-col img {
+  max-height: 380px !important;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: 16in 9in landscape;
+    margin: 0;
+  }
+
+  .pdf-export-btn {
+    display: none !important;
+  }
+}

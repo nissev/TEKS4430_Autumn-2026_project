@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iso-Roban kävelykadun siivousrobotti — TEKS4430</title>
+
+  <!-- Reveal.js ja koodikorostustyylit CDN:stä -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css" />
+  <link rel="stylesheet" href="css/custom-theme.css" />
+  <script src="vendor/slide_images.js"></script>
+</head>
+<body>
+  <!-- 1-klikkauksen suora PDF-tiedoston lataus (ei riipu selaimen tulostusikkunasta) -->
+  <button id="printBtn" class="pdf-export-btn" title="Lataa PDF suoraan">
+    <span>⬇ Vie PDF</span>
+  </button>
+
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ==================================================================
+           DIA 1: OTSIKKODIA
+           ================================================================== -->
+      <section class="hero-slide">
+        <div class="hero-layout">
+          <div class="hero-content">
+            <span class="badge">TEKS4430 • Autonomisten kyberfyysisten järjestelmien toteuttaminen projekti</span>
+            <h1>Roskienkeräysrobotti urbaaniin ympäristöön</h1>
+            <p class="hero-subtitle">
+              Nils Vähä-Vahe
+            </p>
+          </div>
+
+          <div class="hero-visual">
+            <img id="robot-img" src="./assets/robot.png" alt="KUKA YouBot" />
+          </div>
+        </div>
+        <aside class="notes">
+          <ul>
+            <li>Tervetuloa TEKS4430-kurssin harjoitustyön esitykseen.</li>
+            <li>Päätin tosiaan lopulta toteuttaa robotin roskien keräämistä varten, ainakin Helsingissä roskaaminen on valitettavan yleinen ilmiö.</li>
+            <li>Järjestelmän tavoitteena on vähentää roskien määrää katukuvassa.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 2: SOVELLUSALUE & ARKKITEHTUURINEN SUUNNANMUUTOS (ADR-001 & ADR-002)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>1. Konsepti ja arkkitehtuurinen suunnanmuutos</span>
+          <span class="badge adr">ADR-001 • ADR-002</span>
+        </h2>
+
+        <div class="split-compare-layout">
+          <div class="compare-cards-col">
+            <div class="card warn">
+              <h3>Alkuperäinen idea: Pientareen maastorobotti</h3>
+              <ul>
+                <li><strong>Mallien puute</strong>: Ei sopivaa valmista maastoalusta + käsivarsi -robottia.</li>
+                <li><strong>Suorituskyky</strong>: Raskas epätasainen maasto aiheutti viiveitä simulaattorissa.</li>
+                <li><strong>Anturiongelmat</strong>: Epätasainen maasto vääristi 2D-LiDAR-havaintoja.</li>
+              </ul>
+            </div>
+
+            <div class="card layer-3">
+              <h3>Suunnanmuutos: Urbaani YouBot</h3>
+              <ul>
+                <li><strong>Valmis alusta</strong>: Vakaa KUKA YouBot (Mecanum-ajo, 5-DOF-varsi, tarttuja).</li>
+                <li><strong>Kevyt simulaatio</strong>: Tasainen kivikatu säästää tietokoneen resursseja.</li>
+                <li><strong>Kurssiyhteensopivuus</strong>: Suora jatkumo harjoitustöiden 2–4 säätöratkaisuille.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="compare-media-col">
+            <img id="arena-img" src="assets/isoroba_arena.png" alt="Iso-Roban kävelykatumaailma Webotsissa" />
+            <div class="compare-media-caption">Webots: Iso-Roban kävelykatumaailma ja KUKA YouBot</div>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <ul>
+            <li>Alkuperäinen idea oli toteuttaa vaativaan maastoon robotti, mitä voisi hyödyntää esimerkiksi tien pientareiden roskien keräämisessä.</li>
+            <li>Suurimpana haasteena tämän kanssa tuli robotin rakentaminen valmiista malleista. Ongelmana erityisesti käden sovittaminen malleihin, mitkä pärjäisivät vaativassa maastossa.</li>
+            <li>Myös tietokoneeni tehot meinasivat loppua.</li>
+            <li>Tarpeeksi monen yrityksen jälkeen päätin muuttaa järjestelmän tavoitetta.</li>
+            <li>Tähän inspiraation sain Helsingin Iso-Roban alueesta; ajattelin, että robotti olisi helpompi alkuun toteuttaa kävelykadulle, jolloin liikennettä on vähemmän.</li>
+            <li>Robotiksi valitsin tehtävästä 4 tutun YouBot KUKAn.</li>
+            <li>Uusi suunta oli myös helpommin toteutettavissa ja tutummilla paloilla aiemmista tehtävistä.</li>
+            <li>Mainittakoon vielä tässä, että toteutettu projekti on vasta proof-of-concept-tason toteutus ja siitä puuttuu monia osia.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 3: 3-KERROKSINEN AUTONOMINEN CPS-ARKKITEHTUURI (MERMAID-KAAVIO)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>2. Kolmikerroksinen autonominen CPS-arkkitehtuuri</span>
+          <span class="badge">ROS 2 Jazzy + Webots R2025a</span>
+        </h2>
+
+        <div class="mermaid-box arch-graph">
+          <pre class="mermaid">
+flowchart TD
+    subgraph SENSORS["1. Havainnointi & Anturit (Webots + perception_node)"]
+        direction LR
+        S["Webots-anturit:<br/>2D LiDAR, Kamera, IMU"] -->|"/scan, /camera, /wheel_odom"| P["perception_node.py<br/>• LiDAR-törmäyskeilat<br/>• Roskan 3D-paikka"]
+    end
+
+    subgraph BRAIN["2. Päättely & Tehtäväsuunnittelu (behavior_tree_node)"]
+        BT["behavior_tree_node.py (py_trees)<br/>• Prioriteetti 1: Reaktiivinen esteiden väistö & hätäkeskeytys<br/>• Prioriteetti 2: Kadun partiointi & roskien poiminta"]
+    end
+
+    subgraph ACTUATION["3. Toiminta & Säätö (base_controller + arm_fsm)"]
+        direction LR
+        PID["base_controller_node.py<br/>Monisuuntainen PID (vx, vy, wz)<br/>Ainoa /cmd_vel-julkaisija"] -->|"/cmd_vel"| W["Webots-toimilaitteet:<br/>Mecanum-pyörät + käsivarsi"]
+        FSM["arm_fsm_node.py<br/>8-tilainen käsivarsitilakone<br/>(arm1..5 + tarttuja)"] -->|"/arm/joint_cmd"| W
+    end
+
+    %% Suora kerrosten välinen tiedonkulku solmulta solmulle
+    P -->|"/youbot/clearance, /youbot/trash_target"| BT
+    BT -->|"/youbot/base_mode"| PID
+    BT -->|"/arm/pick_trigger, /arm/abort"| FSM
+    FSM -.->|"/arm/pick_status"| BT
+          </pre>
+        </div>
+
+        <p class="slide-meta">
+          Yksi paketti (<code>isoroba_cleaner_pkg</code>, <span class="badge adr">ADR-006</span>) &bull; 
+          <strong>Modulaarisuus:</strong> Ohjaus- ja säätölogiikat eriytetty ROS 2:sta puhtaiksi Python-moduuleiksi <code>pytest</code>-yksikkötestausta varten.
+        </p>
+        <aside class="notes">
+          <ul>
+            <li>Tosiaan oheisesta Mermaid-kaaviosta nähdään ROS 2 -solmut ja kuinka ne kommunikoivat keskenään.</li>
+            <li>Arkkitehtuuria suunnitellessa pyrittiin huomioimaan kurssilta tuttua kolmea kerrosta.</li>
+            <li>Ensimmäisessä kerroksessa tosiaan on havainnointi ja anturit eli LiDARin ja kameran sensoridatan käsittely.</li>
+            <li>Toisessa kerroksessa päättely ja tehtävänsuunnittelu. Tähän hyödynnettiin kurssilta tuttua py_trees-käyttäytymispuuta.</li>
+            <li>Kolmannessa kerroksessa toiminta ja säätö. Tämä sisältää robottikädelle tilakoneen sekä roskan lähestymisessä hyödynnetyn PID-säätimen.</li>
+            <li>Ydinlogiikka (PID, BT-lehdet, tilakone) on eriytetty ROS 2 -rajapinnasta puhtaiksi Python-funktioiksi, mikä mahdollistaa nopeat yksikkötestit pytestillä ilman simulaattoria.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 4: KERROS 1 — AISTIMINEN, HAVAINNOINTI & IMU-FUUSIOITU ODOMETRIA
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>3. Kerros 1: Aistiminen ja havainnointi</span>
+          <span class="badge layer-1">perception_node.py • ADR-003</span>
+        </h2>
+
+        <div class="grid-3">
+          <div class="card layer-1">
+            <h3>2D-LiDAR-törmäyskeilat</h3>
+            <ul>
+              <li>Käsittelee <code>/scan_front</code>- ja <code>/scan_rear</code>-keilat tapahtumapohjaisesti.</li>
+              <li><code>[-30°, +30°]</code> törmäyskeilat julkaistaan erillisinä liukulukuina (<code>/youbot/clearance/front</code>, <code>rear</code>).</li>
+              <li>Vertaa vasenta <code>[0°, +90°]</code> ja oikeaa <code>[-90°, 0°]</code> puoliskoa väistösuunnan (<code>recommended_turn</code>) määrittämiseksi.</li>
+            </ul>
+          </div>
+
+          <div class="card layer-1">
+            <h3>Kameran kohdesuodatus</h3>
+            <ul>
+              <li>Ajuri julkaisee raakahavainnot <code>/camera/recognized_trash</code>-aiheeseen.</li>
+              <li><strong>Simuloitu semantiikka</strong>: Korvaa neuroverkon suodattamalla suoraan <code>Recognition</code>-merkkijonon (<code>"biscuit box"</code>), lisäksi geometrinen karsinta (korkeus z &approx; 0 m, ulottuvuus).</li>
+              <li>Muuntaa <code>camera_link</code> &rarr; <code>base_link</code> ja lukitsee lähimmän roskan (<code>/youbot/trash_target</code>).</li>
+            </ul>
+          </div>
+
+          <div class="card layer-1">
+            <h3>Mecanum- ja IMU-tilatieto</h3>
+            <ul>
+              <li>Laskee sekä julkaisee nopeudet ja asennon <code>/wheel_odom_raw</code> aiheelle.</li>
+              <li>IMU-anturi pitää suuntakulman vakaana estäen pyörien luistosta johtuvan kääntymisen.</li>
+              <li>Mahdollistaa kadun keskilinjalla pysymisen ja suoran tartunta-asennon roskalaatikolle.</li>
+            </ul>
+          </div>
+        </div>
+        <aside class="notes">
+          <ul>
+             <li>Tosiaan aistimista tehdään kolmella alueella: LiDAR, Kamera, ja suuntaus IMUn ja Odometrian avulla.</li>
+            <li>LiDAReita robotissa tosiaan on kaksi etu ja taka sektoreille. Molempien LiDAReiden tuloksista luodaan clearance topicit, joiden avulla voidaan sitten välttää törmäykset.</li>
+            <li>Kamerassa tehtiin tietoinen valinta simuloimalla semantiikkaa, eli oikeaa toteutusta varten pitäisi tehdä neuroverkko joka toisi semantiikan roskien tunnistamiseen. Kameran datasta tuotetaan roska kohde suunnittelukerrosta varten.</li>
+            <li>Kolmantena hyödynnetään odometriaa ja IMU robotin suuntauksen selvittämisessä. Koska robotilla on suhteellisen paljon luistoa IMUn fuusionti on tärkeää. </li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 5: KERROS 2 — HYBRIDI KÄYTTÄYTYMISPUU (PY_TREES)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>4. Kerros 2: Hybridi käyttäytymispuu (Behavior Tree)</span>
+          <span class="badge layer-2">behavior_tree_node.py • ADR-004</span>
+        </h2>
+
+        <div class="grid-2-1">
+          <div class="mermaid-box bt-graph">
+            <pre class="mermaid">
+flowchart TD
+    Root["Juuri-Selector (Memory: False)"]
+    Safety["Sequence: Reaktiivinen turvallisuus (Prioriteetti 1)"]
+    Mission["Selector: Tehtävälogiikka (Prioriteetti 2)"]
+
+    ObsCheck(["IsObstacleTooClose?<br/>(Etu-/takakeila + katvesuodatus)"])
+    Avoid["AvoidObstacle<br/>(Poiminnan keskeytys /arm/abort<br/>+ 2-vaiheinen väistö ja peruutus)"]
+
+    Collect["Sequence: LitterCollection"]
+    Patrol["PatrolStreet<br/>(IMU-vakautettu katupartiointi)"]
+
+    Approach["DetectAndApproachTrash<br/>(Odottaa /youbot/base_parked)"]
+    Pick["ExecuteArmSubFSM<br/>(Käynnistää /arm/pick_trigger)"]
+
+    Root --> Safety
+    Root --> Mission
+    Safety --> ObsCheck
+    Safety --> Avoid
+    Mission --> Collect
+    Mission --> Patrol
+    Collect --> Approach
+    Collect --> Pick
+            </pre>
+          </div>
+
+          <div class="card layer-2">
+            <h3>Keskeiset päättelymekanismit</h3>
+            <ul>
+              <li><strong>Välitön keskeytys (Preemption)</strong>: Turvallisuushaara tarkistetaan jokaisella syklillä; esteen ilmaantuessa poiminta keskeytetään heti (<code>/arm/abort</code>).</li>
+              <li><strong>Käsivarren katvesuodatus</strong>: Ohittaa etu-LiDARin lähialueen (<code>&lt; 0.40 m</code>) heijastukset käsivarren laskeutuessa säteen läpi poiminnan aikana.</li>
+              <li><strong>Tehtävän aikarajat ja lukitus</strong>: Validoi kohteen tuoreuden (&le; 0,5 s), katkaisee pitkittyneen lähestymisen (60 s timeout) ja asettaa 3,0 s aikalukituksen epäonnistuneille tartunnoille.</li>
+            </ul>
+          </div>
+        </div>
+  <aside class="notes">
+          <ul>
+             <li>Toinen kerros toteutuksessa hoitaa ns "mission-control" suunnittelun yms.</li>
+             <li>Toteutuksessa tehtiin lyhyen aikavälin käyttäymispuu joka mahdollistaa autonomisen toiminnan.</li>
+             <li>Mermaid kaaviossa on kuvattu käyttäymispuu</li>
+             <li>Käyttäymispuu koostuu kahdesta ylätason käytöksestä suuremmalla prioriteetillä turvallisuus ja matalemalla tehtävälogiikka</li>
+             <li>Turvallisuudessa tarkastellaan onko jokin esine liian lähellä ja vältellään estettä mikäli näin on.</li>
+             <li>Tehtävälogiikassa on seqvenssi roskien keräämiselle sekä partiointi logiikka.</li>
+             <li>Tämän lisäksi on mekanismeja kuten välitön keräyksen keskeytys jos este havaitaan. Tätä varten tehtiin myös käsivarren katvesuodatus.</li>
+             <li>Myös sulavamman kokemuksen kannalta tehtiin tehtävien aikarajoja ja lukituksia.</li>
+             <li>Realistisessa toteutuksessa tehtäisiin yös pidemmän aikavälin suunnittelua mikä jätettiin nyt toteuttamatta.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 6: KERROS 3 — TOIMINTA JA SÄÄTÖ (ALUSTA JA ROBOTTIKÄSI)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>5. Kerros 3: Toiminta ja säätö — alusta ja robottikäsi</span>
+          <span class="badge layer-3">base_controller_node.py • arm_fsm_node.py • ADR-005</span>
+        </h2>
+
+        <div class="grid-2">
+          <div class="card layer-3">
+            <h3>Robottialustan monisuuntainen PID-säätö (<code>base_controller_node.py</code>)</h3>
+            <ul>
+              <li><strong>Ainoa <code>/cmd_vel</code>-julkaisija</strong>: Ohjaa nopeutta tilan <code>/youbot/base_mode</code> (<code>IDLE</code>, <code>PATROL</code>, <code>APPROACH</code>, <code>AVOID</code>) perusteella.</li>
+              <li><strong>3 liikeakselin samanaikainen säätö</strong> (eteen-taakse, sivuttain, suuntakulma):
+                <ul>
+                  <li>Pituussuuntainen etäisyys: e<sub>x</sub> = x<sub>kohde</sub> &minus; 0.45 m</li>
+                  <li>Sivuttaissuuntainen Mecanum-siirto: e<sub>y</sub> = y<sub>kohde</sub> &rarr; 0.0 m</li>
+                  <li>Käytävän suuntainen kulma: e<sub>&theta;</sub> &rarr; 0 tai &pi; rad</li>
+                </ul>
+              </li>
+              <li>Asettaa <code>/youbot/base_parked = True</code>, kun virheet pysyvät toleranssissa 5 peräkkäistä sykliä.</li>
+            </ul>
+          </div>
+
+          <div class="card layer-3">
+            <h3>Robottikäden ja tarttujan tilakone (FSM) (<code>arm_fsm_node.py</code>)</h3>
+            <ul>
+              <li><strong>8-vaiheinen deterministinen tilakone</strong>:
+                lähestyminen, tartunta, nosto roskakoriin ja paluu perusasentoon (<code>IDLE</code> &rarr; <code>PRE_GRASP</code> &rarr; <code>GRASP</code> &rarr; <code>CLOSE_GRIPPER</code> &rarr; <code>LIFT</code> &rarr; <code>DROP_IN_BIN</code> &rarr; <code>RELEASE_GRIPPER</code> &rarr; <code>RETURN_HOME</code>).</li>
+              <li><strong>Suljetun silmukan varmistus</strong>: Seuraa <code>/joint_states</code>-arvoja (<code>arm1..5</code> sekä tarttujan sormet).</li>
+              <li><strong>Tyhjän tartunnan tunnistus</strong>: Ilmoittaa <code>FAILED</code>, jos sormet painuvat täysin kiinni (<code>&lt; 0.002 m</code>) ilman kappaletta.</li>
+            </ul>
+          </div>
+        </div>
+          <aside class="notes">
+          <ul>
+             <li>Kolmas kerros mahdollistaa aktuaattoreiden tarkan toiminnan.</li>
+             <li>Liikkumista varten toteutettiin PID-säädin, jota käytetään roskan lähestymisessä, jolloin päästään tarkasti lähelle. Pohja mahdollistaa kolmen liikeakselin liikkumisen, joten säätäminen tehtiin myös näille kolmelle akselille.</li>
+             <li>Kun virheet tasaantuvat, asetetaan robotti parkeeratuksi, jolloin tiedetään lähestymisen olevan valmis.</li>
+             <li>Robottikäden liikkumista varten tehtiin tilakone.</li>
+             <li>Tilakone koostuu kahdeksasta vaiheesta. Sen liikkumista varmistetaan nivelien tilaa seuraamalla.</li>
+             <li>Tilakone pyrkii myös tunnistamaan tyhjän tartunnan ja ilmoittaa virheestä eteenpäin, jolloin tarttumista voidaan yrittää uudestaan.</li>
+             <li>Todellisessa toteutuksessa käytettäisiin monimutkaisempaa toteutusta, joka osaisi reagoida erilaisiin roskiin; yksinkertaisuuden vuoksi tämä jätettiin toteuttamatta.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 7: ARKKITEHTUURIPÄÄTÖKSET (ADR-001 – ADR-007)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>6. Keskeiset arkkitehtuuripäätökset (ADR)</span>
+          <span class="badge adr">docs/adr/001..007</span>
+        </h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ADR</th>
+              <th>Päätös</th>
+              <th>Perustelu ja kompromissi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ADR-001</strong></td>
+              <td>KUKA YouBot -alusta</td>
+              <td>Valmis Mecanum-alusta + 5-DOF-käsivarsi + roskasäiliö; vaihtaa maastokelpoisuuden tarkkaan sivuttaisliikkeeseen.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-002</strong></td>
+              <td>Iso-Roban kävelykatumaailma</td>
+              <td>Tasainen katu poistaa <code>ElevationGrid</code>-rinteiden vääristämät LiDAR-kaiut säilyttäen realistiset kaupunkiesteet.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-003</strong></td>
+              <td>Havainnointi &amp; IMU-odometria</td>
+              <td>Erilliset LiDAR-etäisyysaiheet, kameran <code>Recognition</code>-suodatus ja IMU-vakautettu Mecanum-odometria.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-004</strong></td>
+              <td>Hybridi BT + käsivarsi-FSM</td>
+              <td>Yhdistää <code>py_trees</code>-puun nopean reaktiivisuuden selkeään vaiheittaiseen käsivarren tilakoneeseen.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-005</strong></td>
+              <td>Holonominen PID &amp; tartunta</td>
+              <td>Samanaikainen (v<sub>x</sub>, v<sub>y</sub>, &omega;<sub>z</sub>) -säätö kohdistaa alustan suoraan kapean (<code>4.2 cm</code>) roskalaatikon eteen <code>0.45 m</code> etäisyydelle.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-006</strong></td>
+              <td>Yksi ROS 2 -pakettirakenne</td>
+              <td>5 modulaarista solmua <code>isoroba_cleaner_pkg</code>-paketissa kurssin Docker- ja <code>colcon build</code> -työnkulun mukaisesti.</td>
+            </tr>
+            <tr>
+              <td><strong>ADR-007</strong></td>
+              <td>Aluerajaus ja suojatiet (Rajaus)</td>
+              <td>Dokumentoi RTK-GPS-aluerajauksen ja dynaamisen liikenteen tunnistuksen puuttumisen tunnettuna PoC-rajauksena.</td>
+            </tr>
+          </tbody>
+        </table>
+          <aside class="notes">
+          <ul>
+             <li>Käytin tässä projektissa Architecture Decision Record (ADR) -käytäntöä arkkitehtuuristen päätösten dokumentoinnissa.</li>
+             <li>Tekoälyn aikakaudella näiden dokumentointi suoraan repositorioon auttaa kontekstin rikastamisessa.</li>
+             <li>Päätöksiä muutettiin, mikäli niissä törmättiin puutteisiin; esimerkiksi robottivalinnan ja maailman osalta jouduttiin tekemään suunnanmuutoksia.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 8: LIVE-DEMO / SIMULAATIOESITYS
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>7. Järjestelmädemo (Live / Video)</span>
+          <span class="badge layer-2">Webots + ROS 2 Jazzy</span>
+        </h2>
+
+        <div class="demo-slide-container">
+          <div class="demo-badge-pulse">
+            <span class="demo-pulse-dot"></span>
+            <span>Simulaatiodemo käynnissä</span>
+          </div>
+
+          <div class="demo-card-grid">
+            <div class="demo-card layer-1">
+              <h3>1. Katupartiointi &amp; väistö</h3>
+              <p>IMU-vakautettu käytävänavigointi ja reaktiivinen 2D-LiDAR-väistö terassiaitojen ja penkkien ohi.</p>
+            </div>
+            <div class="demo-card layer-3">
+              <h3>2. Holonominen kohdistus</h3>
+              <p>Mecanum-sivuttaisajo ja pysähtyminen tarkkaan <code>0.45 m</code> poimintaetäisyyteen roskalaatikon eteen.</p>
+            </div>
+            <div class="demo-card layer-2">
+              <h3>3. Poiminta ja säiliöön siirto</h3>
+              <p>5-DOF-käsivarren FSM-vaiheet, suljetun silmukan sormitartunta ja roskan pudotus takasäiliöön.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="notes">
+            <ul>
+             <li>Siirrytään demon puolelle</li>
+             <li>Alkuun tosiaan ollaan partiointi tilassa. </li>
+             <li>Suhteellisen nopeasti kamera tunnistaa roskan ja aloittaa lähestymisen.</li>
+             <li>Kun lähestyminen ilmoittaa, että robotti on parkeerattu se aloittaa poiminnan tilakoneen.</li>
+             <li>Kun tilakone valmistuu aloitetaan partiointi uudestaan, kunnes seuraava roska tunnistetaan.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 9: SIMULAATIORAJAUKSET & JATKOKEHITYS (TODELLINEN JÄRJESTELMÄ)
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>8. Simulaatiorajaukset ja jatkokehitys</span>
+          <span class="badge layer-1">Todellinen laitteisto</span>
+        </h2>
+
+        <div class="grid-2">
+          <div class="card layer-2">
+            <h3>Ohjelmisto, tekoäly ja aistiminen</h3>
+            <ul>
+              <li><strong>Semantiikka ja konenäkö</strong>: Webotsin simuloidun merkkijonotunnisteen korvaaminen oikealla neuroverkolla (esim. YOLOv8 tai Mask R-CNN) roskien luokitteluun ja segmentointiin.</li>
+              <li><strong>ML-pohjainen tartunta (Grasp Pose Estimation)</strong>: Kiinteiden nivelkulmien korvaaminen syvyyskuvasta oppivalla mallilla (esim. Contact-GraspNet), joka ennustaa 6-DOF-tartunta-asennon ja puristusvoiman erilaisille roskille (tölkit, rypistetyt paperit, pussit).</li>
+              <li><strong>Optimistinen simulaatio (Sim-to-Real)</strong>: Ei kohinasyöttöä (<em>noise injection</em>); todellisuudessa anturikohina, valaistusvaihtelut ja IMU-ryömintä vaatisivat kehittynyttä suodatusta (esim. EKF).</li>
+            </ul>
+          </div>
+
+          <div class="card layer-3">
+            <h3>Navigointi, säätö ja fyysinen alusta</h3>
+            <ul>
+              <li><strong>Karttapohjainen navigointi (SLAM &amp; Nav2)</strong>: Globaali reittisuunnittelu ja geofencing-rajaukset autoteiden poissulkemiseksi (<span class="badge adr">ADR-007</span>) reaktiivisen LiDAR-väistön tueksi.</li>
+              <li><strong>Ulkokäyttö ja mekaniikka</strong>: Mecanum-rullat tukkeutuvat ulkona sorasta ja lumesta &rarr; vaatii perinteiset ulkokumipyörät tai telat, säänkestävän koteloinnin (IP-luokitus) sekä säiliön lajittelumekanismin.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          <ul>
+            <li>Järjestelmässä on myös useita puutteita verrattuna realistiseen toteutukseen.</li>
+            <li>Ensimmäisenä aistiminen: Webotsissa hyödynnettiin simuloitua semantiikkaa, mutta todellisuudessa tarvitaan konenäkömalli (kuten YOLO) tunnistamaan roskat taustasta.</li>
+            <li>Toisena käsivarsi: kiinteät kulmat toimivat vain yhdelle vakiolaatikolle. Oikea robotti vaatii koneoppimispohjaisen tartuntapisteiden arvioinnin ja voima-anturoinnin, jotta rypistetyt tölkit ja paperit saadaan kyytiin.</li>
+            <li>Kolmantena navigointi: reaktiivisen LiDAR-väistön lisäksi tarvitaan oikea SLAM ja karttapohjainen navigointi, jotta robotti ei eksy kävelykadulta ajoradalle.</li>
+            <li>Viimeisenä alusta: Mecanum-pyörät toimivat vain tasaisilla sisäpinnoilla, ulkona tarvittaisiin karkeammat kumipyörät ja sääsuojaus.</li>
+            <li>Lisäksi simulaatioympäristö on optimistinen ilman kohinasyöttöä (noise injection): todelliset sääolosuhteet, heijastukset ja anturikohina vaatisivat huomattavasti vankempaa suodatusta.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <!-- ==================================================================
+           DIA 10: OSA B — TEKOÄLYTYÖKALUJEN KÄYTTÖ & ITSEREFLEKTIO
+           ================================================================== -->
+      <section>
+        <h2>
+          <span>9. Osa B: Mitä opin?</span>
+          <span class="badge layer-2">Projektin osa B</span>
+        </h2>
+        <div class="card layer-1">
+        <ul>
+          <li>Syventymistä kurssilla opittuihin konsepteihin</li>
+          <li>Konkreettisesti simulaation ja reaalimaailman eroja</li>
+          <li>Pythonin kertausta</li>
+          <li>Kuinka kurssilla opitut konseptit voidaan yhdistää toimivaksi proof-of-concept -toteutukseksi</li>
+          <li>CPS-järjestelmien laajuus: vaikka toteutusta yksinkertaistettiin, siitä tuli silti suhteellisen laaja ja monimutkainen kokonaisuus.</li>
+          <li>Pehmeät kyvykkyydet (projektinhallinta, määrittely ja suunnittelu)</li>
+        </ul>
+      </div>
+        <p class="slide-meta">
+        Tekoäly auttoi läpi projektin uusien asioiden nopeammassa sisäistämisessä. Esimerkiksi Mermaid-kaaviot olivat useassa vaiheessa hyvä tapa hahmottaa ja sisäistää sisältöä.
+        </p>
+      </section>
+      <section>
+        <h2>
+          <span>10. Osa B: Miten ratkaisin ongelmia ja mitä työkaluja käytin?</span>
+          <span class="badge layer-2">Projektin osa B</span>
+        </h2>
+
+        <div class="grid-2">
+          <!-- Kortti 1: Ongelmanratkaisu ja oma työskentely -->
+          <div class="card layer-1">
+            <h3>Oma työtapa ja ongelmanratkaisu</h3>
+            <ul>
+              <li>Tässä projektissa käytin tekoälyä kaikilla osa-alueilla.</li>
+              <li>Suunnittelussa tekoälyn "grill-me" -kyvykkyys auttoi minua määrittelemään, mitä halusin tehdä.</li>
+              <li>Toteutettavat osat jaettiin tekoälyn avulla sopivan kokoisiksi paloiksi.</li>
+              <li>Ohjelmoitavat logiikat eriytettiin ROS 2 -toteutuksista, mikä mahdollisti niiden yksikkötestaamisen ja helpotti validointia.</li>
+              <li>Validoinnissa hyödynnetty "code-review" -kyvykkyys auttoi tunnistamaan puutteet määritellystä toteutuksesta sekä muista mahdollisista ongelmista.</li>
+              <li>Diaesityksen pohjat loin tekoälyllä hyödyntäen Reveal.js-kirjastoa. Sisältöä tehtiin sekä käsin että generoimalla koodipohjan perusteella.</li>
+              <li>Kaikki tuotettu sisältö pyrittiin validoimaan lähteistä, päättelemällä ja testaamalla.</li>
+            </ul>
+          </div>
+
+          <!-- Kortti 2: Tekoälytyökalun läpinäkyvyys -->
+          <div class="card layer-2">
+            <h3>Tekoälytyökalu ja läpinäkyvyys</h3>
+            <ul>
+              <li><strong>Työkalu</strong>: Koodaukseen tarkoitettu <em>Antigravity CLI</em> -agenttityökalu (Google AI Pro -lisenssi).</li>
+              <li><strong>Käytetyt mallit projektissa</strong>:
+                <ul>
+                  <li><code>Gemini 4 Argon</code> (thinking: <em>medium</em> / <em>high</em>)</li>
+                  <li><code>Gemini 3.8 Flash</code> (thinking: <em>medium</em>)</li>
+                  <li><code>Gemini 4 Hydrogen</code> (thinking: <em>medium</em> / <em>high</em>)</li>
+                </ul>
+              </li>
+              <li><strong>Ohjaus ja validointi (<code>AGENTS.md</code>)</strong>: Kurssirepositorion käskytiedosto velvoitti mallia ilmoittamaan lähteet tiedon luotettavuuden varmistamiseksi.</li>
+            </ul>
+          </div>
+        </div>
+
+      </section>
+      <section>
+        <h2>
+          <span>11. Osa B: Konkreettinen esimerkki — Frankenstein-robotti</span>
+          <span class="badge layer-2">Projektin osa B</span>
+        </h2>
+
+        <div class="split-compare-layout">
+          <!-- Vasen sarake: Analyysi ja kriittinen arviointi -->
+          <div class="compare-cards-col">
+            <div class="card warn">
+              <h3>Tekoälyn ehdotus vs. Fyysinen todellisuus</h3>
+              <ul>
+                <li><strong>Lähtökohta</strong>: Halusin toteuttaa maastorobotin pientareiden siivoukseen. Tekoäly ehdotti yhdistämään 4-pyöräisen Pioneer 3-AT -alustan ja teollisuusrobotin käsivarren Webotsin PROTO-rakenteella.</li>
+                <li><strong>Tulos simulaatiossa ("Frankenstein")</strong>:
+                  <ul>
+                    <li>Käsivarsi jouduttiin pulttaamaan luonnottomasti etupuskurin kulmaan maata viistäen.</li>
+                    <li>Painopiste vääristyi täysin, alustan jousitus petti ja käsivarsi törmäili maahan.</li>
+                    <li>Raskas mäkinen maasto vääristi 2D-LiDARin säteet ja hidasti simulaattorin.</li>
+                  </ul>
+                </li>
+                <li>Tästäkin saatiin lopulta toimivampia toteutuksia, mutta monessa Webots-maailman säädössä vaadittiin "trial and error" -tyyppistä iterointia. Useassa tekoälyn toteutusehdotuksessa tarvittiin useita iteraatioita. Taustalla voi olla joko liian yleisluontoinen promptaus tai kielimallien rajallinen tietämys ROS 2- ja Webots-erityispiirteistä.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Oikea sarake: Kuva ja kuvateksti -->
+          <div class="compare-media-col">
+            <img id="frankenstein-img" src="assets/robottisolmussa.png" alt="Tekoälyn ehdottama maastoalusta ja käsivarsi" style="max-height: 420px; object-fit: contain; border-radius: 8px;" />
+            <div class="compare-media-caption">
+              Tekoälyn ehdottama maastoalusta + käsivarsi Webotsissa: fyysisesti epäkelpo painopiste ja maavara.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>
+          <span>12. Osa B: Reflektointi</span>
+          <span class="badge layer-2">Projektin osa B</span>
+        </h2>
+
+        <div class="grid-3">
+          <div class="card warn">
+            <h3>1. Haasteet</h3>
+            <ul>
+              <li>Vaikka tehtävät jaettiin paloihin, ne olisi pitänyt jakaa vielä pienemmiksi. Tämä olisi helpottanut validointia.</li>
+              <li>Rakastuin alkuperäiseen ideaani ja hukkasin aikaa yrittämällä saada sen toimimaan.</li>
+            </ul>
+          </div>
+
+          <div class="card layer-2">
+            <h3>2. Onnistumiset</h3>
+            <ul>
+              <li>Sain tekoälystä paljon hyötyä irti sekä loin hyvät raamit, joissa tekoäly toimii.</li>
+              <li>Paljon parempi ymmärrys siitä, mitä todellinen CPS vaatisi.</li>
+              <li>Toteutusta tehdessäni pyrin käyttämään tekoälyn vapauttamaa aikaa pohtimiseen ja testaamiseen, jolloin ymmärrykseni aiheesta kasvoi ja samalla projektin laatu parani.</li>
+            </ul>
+          </div>
+
+          <div class="card layer-1">
+            <h3>3. Opit tulevaan</h3>
+            <ul>
+              <li>Mikäli tekisin projektin uudestaan, pyrkisin ehdottomasti tekemään toteutusta vielä pienemmissä paloissa.</li>
+              <li>Jatkossa pitää myös keskittyä promptaamiseen enemmän, jolloin säästettäisiin tokeneita ja iteraatioita tarvittaisiin vähemmän.</li>
+              <li>Vaikka ajoittain tekoäly hukkasikin aikaa, loppujen lopuksi se mahdollisti projektin toteuttamisen tässä laajuudessa.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Reveal.js + lisäosat + Mermaid.js + PDF-viejä CDN:stä -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/markdown/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    // Lataa kuvat suoraan Base64:nä jotta canvas-vienti on 100% vapaa CORS-rajoituksista
+    if (window.SLIDE_IMAGES) {
+      const rEl = document.getElementById("robot-img");
+      const aEl = document.getElementById("arena-img");
+      const fEl = document.getElementById("frankenstein-img");
+      if (rEl && window.SLIDE_IMAGES.robot) rEl.src = window.SLIDE_IMAGES.robot;
+      if (aEl && window.SLIDE_IMAGES.arena) aEl.src = window.SLIDE_IMAGES.arena;
+      if (fEl && window.SLIDE_IMAGES.frankenstein) fEl.src = window.SLIDE_IMAGES.frankenstein;
+    }
+    // 1. Konfiguroidaan offline Mermaid vaalealla ja vihreällä teemalla
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      securityLevel: "loose",
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: "basis"
+      },
+      themeVariables: {
+        background: "#ffffff",
+        primaryColor: "#eef5f0",
+        primaryTextColor: "#182820",
+        primaryBorderColor: "#15803d",
+        lineColor: "#2e7d32",
+        secondaryColor: "#e6f6f4",
+        tertiaryColor: "#f7faf8",
+        clusterBkg: "#f7faf8",
+        clusterBorder: "#b7e1c4",
+        fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+      }
+    });
+
+    // 1. Tallennetaan kaikkien Mermaid-lohkojen alkuperäinen lähdekoodi talteen (säilytetään <br/> -tagit)
+    document.querySelectorAll(".reveal pre.mermaid").forEach((el) => {
+      if (!el.getAttribute("data-original-code")) {
+        const rawCode = el.innerHTML
+          .replace(/<br\s*[\/]?>/gi, '<br/>')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim();
+        el.setAttribute("data-original-code", rawCode);
+      }
+    });
+
+    // 2. Apufunktio: renderöi varmasti vain aktiivisen näkyvän dian kaaviot (estää 0x0-mitat piilotetuissa dioissa)
+    let diagCounter = 0;
+    async function renderMermaidDiagrams() {
+      const currentSlide = document.querySelector(".reveal .slides section.present") || Reveal.getCurrentSlide();
+      if (!currentSlide) return;
+
+      const blocks = currentSlide.querySelectorAll("pre.mermaid");
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+        if (block.getAttribute("data-rendered") === "true") continue;
+        const code = block.getAttribute("data-original-code") || block.textContent.trim();
+        if (!code) continue;
+        diagCounter++;
+        const uniqueId = "mermaid-svg-" + diagCounter;
+        try {
+          const { svg } = await mermaid.render(uniqueId, code);
+          block.innerHTML = svg;
+          block.setAttribute("data-rendered", "true");
+        } catch (err) {
+          console.error("Mermaid render error:", err);
+        }
+      }
+    }
+
+    // 2. Alustetaan Reveal.js
+    Reveal.initialize({
+      width: 1280,
+      height: 720,
+      margin: 0.06,
+      minScale: 0.2,
+      maxScale: 2.0,
+      hash: true,
+      center: false,
+      controls: true,
+      progress: true,
+      slideNumber: "c/t",
+      transition: "slide",
+      pdfMaxPagesPerSlide: 1,
+      pdfSeparateFragments: false,
+      plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+    }).then(() => {
+      renderMermaidDiagrams();
+    });
+
+    Reveal.on("slidechanged", () => {
+      renderMermaidDiagrams();
+    });
+
+    Reveal.on("pdf-ready", () => {
+      renderMermaidDiagrams();
+    });
+
+    // 1-klikkauksen suora PDF-tiedoston lataus (ei riipu selaimen tulostusikkunasta)
+    document.getElementById("printBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("printBtn");
+      const originalLabel = btn.innerHTML;
+      btn.disabled = true;
+
+      const originalIndices = Reveal.getIndices();
+      const allSlides = Reveal.getSlides().filter(
+        (slide) =>
+          slide.getAttribute("data-visibility") !== "hidden" &&
+          slide.getAttribute("data-visibility") !== "uncounted"
+      );
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: "landscape",
+          unit: "px",
+          format: [1280, 720],
+          hotfixes: ["px_scaling"]
+        });
+
+        document.body.classList.add("exporting-pdf");
+        btn.style.display = "none";
+
+        // Hide navigation arrows, progress bar, and slide numbers during PDF capture
+        const controlsEl = document.querySelector(".reveal .controls");
+        const progressEl = document.querySelector(".reveal .progress");
+        const slideNumEl = document.querySelector(".reveal .slide-number");
+        if (controlsEl) controlsEl.style.display = "none";
+        if (progressEl) progressEl.style.display = "none";
+        if (slideNumEl) slideNumEl.style.display = "none";
+
+        const viewportEl = document.querySelector(".reveal-viewport");
+
+        const prevViewportStyle = viewportEl.getAttribute("style") || "";
+        viewportEl.style.width = "1280px";
+        viewportEl.style.height = "720px";
+        viewportEl.style.position = "fixed";
+        viewportEl.style.top = "0";
+        viewportEl.style.left = "0";
+        Reveal.layout();
+
+        for (let i = 0; i < allSlides.length; i++) {
+          btn.innerHTML = `<span>⏳ Viedään ${i + 1}/${allSlides.length}...</span>`;
+          const indices = Reveal.getIndices(allSlides[i]);
+          Reveal.slide(indices.h, indices.v);
+
+          await renderMermaidDiagrams();
+          Reveal.layout();
+          await new Promise((r) => setTimeout(r, 180));
+
+          const canvas = await html2canvas(viewportEl, {
+            scale: 2,
+            width: 1280,
+            height: 720,
+            windowWidth: 1280,
+            windowHeight: 720,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#f7faf8",
+            logging: false
+          });
+
+          const imgData = canvas.toDataURL("image/jpeg", 0.96);
+          if (i > 0) {
+            pdf.addPage([1280, 720], "landscape");
+          }
+          pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720);
+        }
+
+        viewportEl.setAttribute("style", prevViewportStyle);
+        Reveal.layout();
+        pdf.save("TEKS4430_IsoRoba_Siivousrobotti_Diat.pdf");
+      } catch (err) {
+        console.error("PDF-vienti epäonnistui:", err);
+        alert("PDF-vienti epäonnistui: " + err.message);
+      } finally {
+        document.body.classList.remove("exporting-pdf");
+        btn.style.display = "";
+
+        // Restore navigation arrows, progress bar, and slide numbers
+        if (controlsEl) controlsEl.style.display = "";
+        if (progressEl) progressEl.style.display = "";
+        if (slideNumEl) slideNumEl.style.display = "";
+
+        Reveal.slide(originalIndices.h, originalIndices.v);
+        btn.disabled = false;
+        btn.innerHTML = originalLabel;
+      }
+    });
+  </script>
+</body>
+</html>
